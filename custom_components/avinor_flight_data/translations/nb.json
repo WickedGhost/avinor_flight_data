@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Avinor flydata",
+        "description": "Velg flyplass og retning. Antall flyplasser tilgjengelig: {airport_count}",
+        "data": {
+          "airport": "Flyplass (IATA)",
+          "direction": "Retning (A=Ankomster, D=Avganger)",
+          "time_from": "Tid fra (timer tilbake)",
+          "time_to": "Tid til (timer frem)"
+        }
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "title": "Avinor innstillinger",
+          "data": {
+            "airport": "Flyplass (IATA)",
+            "direction": "Retning",
+            "time_from": "Tid fra (timer tilbake)",
+            "time_to": "Tid til (timer frem)"
+          }
+        }
+      }
+    }
+  }
+}

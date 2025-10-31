@@ -1,0 +1,12 @@
+{
+  "domain": "avinor_flight_data",
+  "name": "Avinor Flight Data",
+  "documentation": "https://github.com/WickedGhost/avinor_flight_data",
+  "issue_tracker": "https://github.com/WickedGhost/avinor_flight_data/issues",
+  "version": "0.1.0",
+  "codeowners": ["@WickedGhost"],
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "requirements": ["xmltodict==0.13.0"],
+  "loggers": ["custom_components.avinor_flight_data"]
+}

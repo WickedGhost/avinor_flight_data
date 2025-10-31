@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Avinor Flight Data",
+        "description": "Select airport and direction. Airports available: {airport_count}",
+        "data": {
+          "airport": "Airport (IATA)",
+          "direction": "Direction (A=Arrivals, D=Departures)",
+          "time_from": "Time from (hours back)",
+          "time_to": "Time to (hours forward)"
+        }
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "title": "Avinor options",
+          "data": {
+            "airport": "Airport (IATA)",
+            "direction": "Direction",
+            "time_from": "Time from (hours back)",
+            "time_to": "Time to (hours forward)"
+          }
+        }
+      }
+    }
+  }
+}
