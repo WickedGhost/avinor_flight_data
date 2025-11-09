@@ -72,17 +72,27 @@ class AvinorFlightCard extends HTMLElement {
 
     const header = `Airport: ${airport} • Direction: ${direction} • Flights: ${flights.length} • Updated: ${lastUpdate}`;
 
-    const rows = flights.map(f => `
-      <tr>
-        <td style="padding: 8px;">${this._e(f.flightId)}</td>
-        <td style="padding: 8px;">${this._e(f.dom_int)}</td>
-        <td style="padding: 8px;">${this._e(f.schedule_time)}</td>
-        <td style="padding: 8px;">${this._e(f.airport)}</td>
-        <td style="padding: 8px;">${this._e(f.check_in)}</td>
-        <td style="padding: 8px;">${this._e(f.gate)}</td>
-        <td style="padding: 8px;">${this._e(f.status_code)}</td>
-      </tr>
-    `).join('');
+    const rows = flights.map(f => {
+      // Convert dom_int code to description
+      const typeMap = {
+        'S': 'Schengen',
+        'D': 'Domestic',
+        'I': 'International'
+      };
+      const flightType = typeMap[f.dom_int] || f.dom_int || '';
+
+      return `
+        <tr>
+          <td style="padding: 8px;">${this._e(f.flightId)}</td>
+          <td style="padding: 8px;">${this._e(flightType)}</td>
+          <td style="padding: 8px;">${this._e(f.schedule_time)}</td>
+          <td style="padding: 8px;">${this._e(f.airport)}</td>
+          <td style="padding: 8px;">${this._e(f.check_in)}</td>
+          <td style="padding: 8px;">${this._e(f.gate)}</td>
+          <td style="padding: 8px;">${this._e(f.status_code)}</td>
+        </tr>
+      `;
+    }).join('');
 
     this._content.innerHTML = `
       <div style="margin-bottom:8px; font-size: 0.9em; color: var(--secondary-text-color);">${header}</div>

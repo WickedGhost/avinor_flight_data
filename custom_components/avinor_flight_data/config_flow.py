@@ -68,10 +68,17 @@ class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_AIRPORT): airport_field,
-                vol.Required(CONF_DIRECTION, default="A"): vol.In({"A": "A (Arrivals)", "D": "D (Departures)"}),
-                vol.Optional(CONF_TIME_FROM, default=DEFAULT_TIME_FROM): vol.All(int, vol.Range(min=0, max=72)),
-                vol.Optional(CONF_TIME_TO, default=DEFAULT_TIME_TO): vol.All(int, vol.Range(min=0, max=72)),
+                vol.Required(CONF_AIRPORT, description={"suggested_value": "OSL"}): airport_field,
+                vol.Required(CONF_DIRECTION, default="A"): vol.In({
+                    "A": "Arrivals (Ankomster)",
+                    "D": "Departures (Avganger)"
+                }),
+                vol.Optional(CONF_TIME_FROM, default=DEFAULT_TIME_FROM, description={"suggested_value": 1}): vol.All(
+                    int, vol.Range(min=0, max=72)
+                ),
+                vol.Optional(CONF_TIME_TO, default=DEFAULT_TIME_TO, description={"suggested_value": 7}): vol.All(
+                    int, vol.Range(min=0, max=72)
+                ),
             }
         )
 
@@ -117,41 +124,56 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
 
         data_schema = vol.Schema(
             {
-                vol.Optional(CONF_AIRPORT, default=airport_default): airport_field,
-                vol.Optional(CONF_DIRECTION, default=direction_default): vol.In({"A": "A (Arrivals)", "D": "D (Departures)"}),
-                vol.Optional(CONF_TIME_FROM, default=time_from_default): vol.All(int, vol.Range(min=0, max=72)),
-                vol.Optional(CONF_TIME_TO, default=time_to_default): vol.All(int, vol.Range(min=0, max=72)),
+                vol.Optional(CONF_AIRPORT, default=airport_default, description={"suggested_value": airport_default}): airport_field,
+                vol.Optional(CONF_DIRECTION, default=direction_default): vol.In({
+                    "A": "Arrivals (Ankomster)",
+                    "D": "Departures (Avganger)"
+                }),
+                vol.Optional(CONF_TIME_FROM, default=time_from_default, description={"suggested_value": time_from_default or 1}): vol.All(
+                    int, vol.Range(min=0, max=72)
+                ),
+                vol.Optional(CONF_TIME_TO, default=time_to_default, description={"suggested_value": time_to_default or 7}): vol.All(
+                    int, vol.Range(min=0, max=72)
+                ),
             }
         )
         return self.async_show_form(step_id="init", data_schema=data_schema)
 
 
 async def _async_fetch_airports(hass: HomeAssistant) -> List[Dict[str, str]]:
-    # cache airports for 1 day to reduce setup-time API calls
+    """Fetch airport list from Avinor API with 24h cache."""
     domain_store = hass.data.setdefault(DOMAIN, {})
     cache = domain_store.get("airports_cache")
     now = time.time()
+    
+    # Return cached data if valid
     if cache and isinstance(cache, dict) and (now - cache.get("ts", 0)) < 24 * 3600:
         airports = cache.get("data", [])
-        if airports:
+        if airports and len(airports) > 4:  # More than just fallback list
+            _LOGGER.debug("Using cached airport list (%d airports)", len(airports))
             return airports
 
+    # Fetch fresh data from Avinor API
     session = async_get_clientsession(hass)
     api = AvinorApiClient(session)
     try:
+        _LOGGER.info("Fetching airport list from Avinor API...")
         airports = await api.async_get_airports()
-        if not airports:
-            # Ensure we always have a few options
+        _LOGGER.info("Fetched %d airports from Avinor", len(airports))
+        
+        if not airports or len(airports) < 5:
+            _LOGGER.warning("Airport API returned too few airports (%d), using fallback", len(airports))
             airports = [
                 {"iata": "OSL", "name": "Oslo Lufthavn"},
                 {"iata": "BGO", "name": "Bergen Lufthavn"},
                 {"iata": "TRD", "name": "Trondheim Lufthavn"},
                 {"iata": "SVG", "name": "Stavanger Lufthavn"},
             ]
+        
         domain_store["airports_cache"] = {"data": airports, "ts": now}
         return airports
     except Exception as err:  # noqa: BLE001
-        _LOGGER.warning("Failed fetching airports list: %s", err)
+        _LOGGER.error("Failed fetching airports list from Avinor: %s", err, exc_info=True)
         # Fallback minimal list
         airports = [
             {"iata": "OSL", "name": "Oslo Lufthavn"},

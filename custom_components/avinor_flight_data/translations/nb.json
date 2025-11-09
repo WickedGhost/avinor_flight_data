@@ -2,37 +2,37 @@
   "config": {
     "step": {
       "user": {
-        "title": "Avinor flydata",
-        "description": "Velg flyplass og retning. Antall flyplasser tilgjengelig: {airport_count}",
+        "title": "Legg til Avinor Flydata",
+        "description": "Konfigurer flyovervåking for en spesifikk flyplass. Tilgjengelige flyplasser: {airport_count}",
         "data": {
-          "airport": "Flyplass (IATA)",
-          "direction": "Retning (A=Ankomster, D=Avganger)",
-          "time_from": "Tid fra (timer tilbake)",
-          "time_to": "Tid til (timer frem)"
+          "airport": "Flyplass",
+          "direction": "Flyretning",
+          "time_from": "Timer tilbake",
+          "time_to": "Timer frem"
         },
         "data_description": {
-          "airport": "IATA-kode som OSL, BGO, TRD. Hvis listen er tom, skriv inn 3-bokstavskoden.",
-          "direction": "A = Ankomster, D = Avganger.",
-          "time_from": "Hvor mange timer tilbake som skal inkluderes.",
-          "time_to": "Hvor mange timer frem som skal inkluderes."
+          "airport": "Velg flyplassen du vil overvåke (IATA-kode). Søk ved å skrive flyplassnavn eller kode.",
+          "direction": "Velg om du vil vise ankommende eller avgående fly.",
+          "time_from": "Inkluder fly fra dette antall timer tilbake (0-72 timer).",
+          "time_to": "Inkluder fly opptil dette antall timer frem (0-72 timer)."
         }
       }
     },
     "options": {
       "step": {
         "init": {
-          "title": "Avinor innstillinger",
+          "title": "Konfigurer Avinor Flydata",
           "data": {
-            "airport": "Flyplass (IATA)",
-            "direction": "Retning",
-            "time_from": "Tid fra (timer tilbake)",
-            "time_to": "Tid til (timer frem)"
+            "airport": "Flyplass",
+            "direction": "Flyretning",
+            "time_from": "Timer tilbake",
+            "time_to": "Timer frem"
           },
           "data_description": {
-            "airport": "Endre IATA-koden om du vil følge en annen flyplass.",
-            "direction": "A = Ankomster, D = Avganger.",
-            "time_from": "Timer tilbake fra nå.",
-            "time_to": "Timer frem fra nå."
+            "airport": "Bytt flyplass for å overvåke en annen lokasjon.",
+            "direction": "Bytt mellom ankomster og avganger.",
+            "time_from": "Juster tidsvinduet for tidligere fly (0-72 timer).",
+            "time_to": "Juster tidsvinduet for fremtidige fly (0-72 timer)."
           }
         }
       }

@@ -73,19 +73,30 @@ class AvinorApiClient:
         if data is None:
             _LOGGER.error("All airport endpoint attempts failed: %s", last_err)
             return []
-        # Structure: airports -> airport (list of entries)
+        
+        # Parse airport list - structure: airportNames -> airportName (list)
         airports = []
         try:
-            items = data.get("airports", {}).get("airport", [])
+            # Try new structure: <airportNames><airportName code="..." name="..."/></airportNames>
+            items = data.get("airportNames", {}).get("airportName", [])
+            if not items:
+                # Try old structure: <airports><airport iata="..." name="..."/></airports>
+                items = data.get("airports", {}).get("airport", [])
+            
             if isinstance(items, dict):
                 items = [items]
+            
             for it in items:
-                iata = it.get("@iata") or it.get("iata") or it.get("code")
-                name = it.get("name") or it.get("@name") or iata
-                if iata:
-                    airports.append({"iata": iata, "name": name})
+                # Try multiple field names for IATA code
+                iata = it.get("@code") or it.get("code") or it.get("@iata") or it.get("iata")
+                name = it.get("@name") or it.get("name") or iata
+                if iata and len(iata) == 3:  # Valid IATA codes are 3 letters
+                    airports.append({"iata": iata.upper(), "name": name})
+            
+            _LOGGER.debug("Parsed %d airports from XML", len(airports))
         except Exception as err:  # noqa: BLE001
-            _LOGGER.warning("Unexpected airport XML format: %s", err)
+            _LOGGER.error("Failed parsing airport XML: %s", err, exc_info=True)
+        
         # Sort by IATA code
         airports.sort(key=lambda a: a.get("iata", ""))
         return airports

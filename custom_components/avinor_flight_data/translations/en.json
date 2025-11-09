@@ -2,37 +2,37 @@
   "config": {
     "step": {
       "user": {
-        "title": "Avinor Flight Data",
-        "description": "Select airport and direction. Airports available: {airport_count}",
+        "title": "Add Avinor Flight Data",
+        "description": "Configure flight monitoring for a specific airport. Available airports: {airport_count}",
         "data": {
-          "airport": "Airport (IATA)",
-          "direction": "Direction (A=Arrivals, D=Departures)",
-          "time_from": "Time from (hours back)",
-          "time_to": "Time to (hours forward)"
+          "airport": "Airport",
+          "direction": "Flight Direction",
+          "time_from": "Hours Back",
+          "time_to": "Hours Forward"
         },
         "data_description": {
-          "airport": "IATA code like OSL, BGO, TRD. If the list is empty, type a 3-letter code.",
-          "direction": "A = Arrivals, D = Departures.",
-          "time_from": "How many hours back in time to include in the query.",
-          "time_to": "How many hours forward in time to include in the query."
+          "airport": "Select the airport to monitor (IATA code). Search by typing the airport name or code.",
+          "direction": "Choose whether to show arriving or departing flights.",
+          "time_from": "Include flights from this many hours ago (0-72 hours).",
+          "time_to": "Include flights up to this many hours ahead (0-72 hours)."
         }
       }
     },
     "options": {
       "step": {
         "init": {
-          "title": "Avinor options",
+          "title": "Configure Avinor Flight Data",
           "data": {
-            "airport": "Airport (IATA)",
-            "direction": "Direction",
-            "time_from": "Time from (hours back)",
-            "time_to": "Time to (hours forward)"
+            "airport": "Airport",
+            "direction": "Flight Direction",
+            "time_from": "Hours Back",
+            "time_to": "Hours Forward"
           },
           "data_description": {
-            "airport": "Change the IATA code if you want to monitor another airport.",
-            "direction": "A = Arrivals, D = Departures.",
-            "time_from": "Hours back from now.",
-            "time_to": "Hours forward from now."
+            "airport": "Change the airport to monitor a different location.",
+            "direction": "Switch between arrivals and departures.",
+            "time_from": "Adjust the time window for past flights (0-72 hours).",
+            "time_to": "Adjust the time window for future flights (0-72 hours)."
           }
         }
       }
