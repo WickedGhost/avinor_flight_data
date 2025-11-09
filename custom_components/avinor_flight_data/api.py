@@ -44,8 +44,30 @@ class AvinorApiClient:
 
         Returns a list of dicts: {"iata": "OSL", "name": "Oslo Lufthavn"}
         """
-        url = f"{API_BASE}{API_AIRPORTS}"
-        data = await self._get_xml(url)
+        primary_url = f"{API_BASE}{API_AIRPORTS}"
+        alt_urls = [
+            primary_url.rstrip("/") + "/",  # ensure trailing slash variant
+            f"{API_BASE}{API_AIRPORTS.split('/')[0]}",  # extremely defensive: first segment only
+        ]
+        data = None
+        last_err: Exception | None = None
+        for url in [primary_url] + alt_urls:
+            try:
+                data = await self._get_xml(url)
+                break
+            except aiohttp.ClientResponseError as err:  # specific HTTP errors
+                last_err = err
+                if err.status == 404:
+                    _LOGGER.warning("Airport endpoint 404 at %s, trying fallback variant", url)
+                    continue
+                raise
+            except Exception as err:  # noqa: BLE001
+                last_err = err
+                _LOGGER.debug("Airport fetch attempt failed at %s: %s", url, err)
+                continue
+        if data is None:
+            _LOGGER.error("All airport endpoint attempts failed: %s", last_err)
+            return []
         # Structure: airports -> airport (list of entries)
         airports = []
         try:
