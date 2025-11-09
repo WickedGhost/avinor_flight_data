@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.components.sensor import SensorStateClass
 
 from .const import (
     DOMAIN,
@@ -27,6 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
     _attr_icon = "mdi:airplane"
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, entry: ConfigEntry, coordinator) -> None:
         super().__init__(coordinator)
@@ -39,8 +41,8 @@ class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def device_info(self):
-        conf = self._entry.data
-        airport = conf[CONF_AIRPORT]
+        conf = {**self._entry.data, **self._entry.options}
+        airport = conf.get(CONF_AIRPORT)
         return {
             "identifiers": {(DOMAIN, f"device_{airport}")},
             "name": f"Avinor {airport}",
@@ -55,7 +57,7 @@ class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        conf = self._entry.data
+        conf: Dict[str, Any] = {**self._entry.data, **self._entry.options}
         data = self.coordinator.data or {}
         return {
             "airport": conf.get(CONF_AIRPORT),

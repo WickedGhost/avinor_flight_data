@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -25,8 +26,17 @@ class AvinorApiClient:
                     resp.raise_for_status()
                     text = await resp.text()
                     return xmltodict.parse(text)
-        except Exception as err:  # noqa: BLE001 - log and rethrow
-            _LOGGER.error("Avinor API error: %s", err)
+        except asyncio.TimeoutError as err:
+            _LOGGER.error("Avinor API timeout fetching %s: %s", url, err)
+            raise
+        except aiohttp.ClientResponseError as err:
+            _LOGGER.error("Avinor API HTTP error (%s) for %s: %s", err.status, url, err)
+            raise
+        except aiohttp.ClientConnectionError as err:
+            _LOGGER.error("Avinor API connection error for %s: %s", url, err)
+            raise
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Avinor API client error for %s: %s", url, err)
             raise
 
     async def async_get_airports(self) -> List[Dict[str, str]]:

@@ -78,7 +78,14 @@ class AvinorFlightCard extends HTMLElement {
 
   _e(v) {
     if (v === undefined || v === null) return '';
-    return String(v);
+    const s = String(v);
+    // Basic HTML escaping to mitigate injection inside innerHTML usage.
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   getCardSize() {

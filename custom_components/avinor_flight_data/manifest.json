@@ -3,7 +3,7 @@
   "name": "Avinor Flight Data",
   "documentation": "https://github.com/WickedGhost/avinor_flight_data",
   "issue_tracker": "https://github.com/WickedGhost/avinor_flight_data/issues",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "codeowners": ["@WickedGhost"],
   "config_flow": true,
   "iot_class": "cloud_polling",

@@ -1,24 +1,31 @@
 from __future__ import annotations
 
+"""Avinor Flight Data integration setup.
+
+Handles creation and lifecycle of coordinators per config entry.
+"""
+
 from datetime import timedelta
 import logging
+from typing import TypedDict
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import (
-    DOMAIN,
-    PLATFORMS,
-    UPDATE_INTERVAL_SECONDS,
-)
+from .const import DOMAIN, PLATFORMS, UPDATE_INTERVAL_SECONDS
 from .coordinator import AvinorCoordinator
 from .api import AvinorApiClient
 
 _LOGGER = logging.getLogger(__name__)
 
 
-type AvinorConfigEntry = ConfigEntry
+AvinorConfigEntry = ConfigEntry  # type alias for clarity
+
+
+class DomainData(TypedDict):
+    coordinator: AvinorCoordinator
+    api: AvinorApiClient
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: AvinorConfigEntry) -> bool:
@@ -26,19 +33,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: AvinorConfigEntry) -> bo
     session = async_get_clientsession(hass)
     api = AvinorApiClient(session)
 
+    # Merge options over data so updated options take effect on reloads
+    conf = {**entry.data, **entry.options}
+
     coordinator = AvinorCoordinator(
         hass,
         api,
-        entry.data,
+        conf,
         update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
     )
 
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
-        "coordinator": coordinator,
-        "api": api,
-    }
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = DomainData(
+        coordinator=coordinator,
+        api=api,
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

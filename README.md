@@ -66,6 +66,16 @@ The card reads the flights from the sensor's attributes and renders a table with
 - Avinor recommends polling every 3 minutes and caching on your side; this integration follows that guidance.
 - If the airport list cannot be fetched during setup, a small built-in fallback list (OSL, BGO, TRD, SVG) is used.
 
+## Changes
+
+- 0.2.0
+	- Fix Python 3.10 compatibility in integration setup.
+	- More robust API error handling (timeouts, HTTP and connection errors logged clearly).
+	- Cache airport list for 24h during config/options flow to reduce API calls.
+	- Sensor attributes now respect options overrides (time window) after reload.
+	- Lovelace card: escape HTML to prevent injection from unexpected data.
+	- Initial unit tests for API parsing.
+
 ## Attribution
 
 "Flydata fra Avinor" – https://www.avinor.no/

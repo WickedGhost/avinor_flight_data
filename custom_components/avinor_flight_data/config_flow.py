@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import logging
 from typing import Any, Dict, List
 
@@ -91,16 +92,29 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
 
 
 async def _async_fetch_airports(hass: HomeAssistant) -> List[Dict[str, str]]:
+    # cache airports for 1 day to reduce setup-time API calls
+    domain_store = hass.data.setdefault(DOMAIN, {})
+    cache = domain_store.get("airports_cache")
+    now = time.time()
+    if cache and isinstance(cache, dict) and (now - cache.get("ts", 0)) < 24 * 3600:
+        airports = cache.get("data", [])
+        if airports:
+            return airports
+
     session = async_get_clientsession(hass)
     api = AvinorApiClient(session)
     try:
-        return await api.async_get_airports()
+        airports = await api.async_get_airports()
+        domain_store["airports_cache"] = {"data": airports, "ts": now}
+        return airports
     except Exception as err:  # noqa: BLE001
         _LOGGER.warning("Failed fetching airports list: %s", err)
         # Fallback minimal list
-        return [
+        airports = [
             {"iata": "OSL", "name": "Oslo Lufthavn"},
             {"iata": "BGO", "name": "Bergen Lufthavn"},
             {"iata": "TRD", "name": "Trondheim Lufthavn"},
             {"iata": "SVG", "name": "Stavanger Lufthavn"},
         ]
+        domain_store["airports_cache"] = {"data": airports, "ts": now}
+        return airports
