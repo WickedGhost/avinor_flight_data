@@ -9,6 +9,12 @@
           "direction": "Direction (A=Arrivals, D=Departures)",
           "time_from": "Time from (hours back)",
           "time_to": "Time to (hours forward)"
+        },
+        "data_description": {
+          "airport": "IATA code like OSL, BGO, TRD. If the list is empty, type a 3-letter code.",
+          "direction": "A = Arrivals, D = Departures.",
+          "time_from": "How many hours back in time to include in the query.",
+          "time_to": "How many hours forward in time to include in the query."
         }
       }
     },
@@ -21,6 +27,12 @@
             "direction": "Direction",
             "time_from": "Time from (hours back)",
             "time_to": "Time to (hours forward)"
+          },
+          "data_description": {
+            "airport": "Change the IATA code if you want to monitor another airport.",
+            "direction": "A = Arrivals, D = Departures.",
+            "time_from": "Hours back from now.",
+            "time_to": "Hours forward from now."
           }
         }
       }

@@ -9,6 +9,12 @@
           "direction": "Retning (A=Ankomster, D=Avganger)",
           "time_from": "Tid fra (timer tilbake)",
           "time_to": "Tid til (timer frem)"
+        },
+        "data_description": {
+          "airport": "IATA-kode som OSL, BGO, TRD. Hvis listen er tom, skriv inn 3-bokstavskoden.",
+          "direction": "A = Ankomster, D = Avganger.",
+          "time_from": "Hvor mange timer tilbake som skal inkluderes.",
+          "time_to": "Hvor mange timer frem som skal inkluderes."
         }
       }
     },
@@ -21,6 +27,12 @@
             "direction": "Retning",
             "time_from": "Tid fra (timer tilbake)",
             "time_to": "Tid til (timer frem)"
+          },
+          "data_description": {
+            "airport": "Endre IATA-koden om du vil følge en annen flyplass.",
+            "direction": "A = Ankomster, D = Avganger.",
+            "time_from": "Timer tilbake fra nå.",
+            "time_to": "Timer frem fra nå."
           }
         }
       }
