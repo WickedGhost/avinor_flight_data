@@ -21,8 +21,13 @@ class AvinorApiClient:
 
     async def _get_xml(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         try:
+            _LOGGER.debug("Avinor request: url=%s params=%s", url, params)
             async with async_timeout.timeout(30):
-                async with self._session.get(url, params=params) as resp:
+                async with self._session.get(
+                    url,
+                    params=params,
+                    headers={"Accept": "application/xml"},
+                ) as resp:
                     resp.raise_for_status()
                     text = await resp.text()
                     return xmltodict.parse(text)
@@ -47,7 +52,7 @@ class AvinorApiClient:
         primary_url = f"{API_BASE}{API_AIRPORTS}"
         alt_urls = [
             primary_url.rstrip("/") + "/",  # ensure trailing slash variant
-            f"{API_BASE}{API_AIRPORTS.split('/')[0]}",  # extremely defensive: first segment only
+            f"{API_BASE}/airportNames",  # non-versioned variant
         ]
         data = None
         last_err: Exception | None = None
@@ -122,13 +127,23 @@ class AvinorApiClient:
         if isinstance(items, dict):
             items = [items]
         for it in items:
+            # Debug log first flight to see structure
+            if len(result["flights"]) == 0:
+                _LOGGER.debug("First flight raw data keys: %s", list(it.keys()))
+                _LOGGER.debug("First flight sample: %s", {k: it.get(k) for k in list(it.keys())[:10]})
+            
             # Normalize fields we care about
             status = it.get("status", {}) or {}
             status_code = status.get("@code") if isinstance(status, dict) else None
+            
+            # Extract flight ID - Avinor uses flight_id (with underscore)
+            flight_id = it.get("flight_id") or it.get("flightId") or ""
+            
             result["flights"].append(
                 {
                     "uniqueId": it.get("@uniqueId"),
-                    "flightId": it.get("flightId"),
+                    "airline": it.get("airline"),
+                    "flightId": flight_id,
                     "dom_int": it.get("dom_int"),
                     "schedule_time": it.get("schedule_time"),
                     "arr_dep": it.get("arr_dep"),
@@ -136,6 +151,7 @@ class AvinorApiClient:
                     "check_in": it.get("check_in"),
                     "gate": it.get("gate"),
                     "status_code": status_code,
+                    "status_time": status.get("@time") if isinstance(status, dict) else None,
                 }
             )
         return result

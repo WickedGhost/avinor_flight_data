@@ -27,9 +27,58 @@ This repository contains:
 2) Install "Avinor Flight Data".
 3) Restart Home Assistant.
 
-Optionally, for the Lovelace card:
-1) In HACS, also add the repo as a custom repository (type: Frontend) or place the JS file manually under `www/community/avinor-flight-card/`.
-2) Add a Lovelace resource pointing to `/hacsfiles/avinor-flight-card/avinor-flight-card.js` (HACS managed) or `/local/community/avinor-flight-card/avinor-flight-card.js` (manual).
+## Lovelace Card Installation
+
+The card displays flight data in a table. Follow these steps carefully.
+
+### Step 1: Create the directory structure
+SSH into Home Assistant or use File Editor and create:
+```
+/config/www/community/avinor-flight-card/
+```
+
+### Step 2: Copy the file
+Copy `www/community/avinor-flight-card/avinor-flight-card.js` from this repo to:
+```
+/config/www/community/avinor-flight-card/avinor-flight-card.js
+```
+
+**Verify the file exists:** You should be able to access:
+```
+http://your-ha-ip:8123/local/community/avinor-flight-card/avinor-flight-card.js
+```
+(Note: `/local/` in the URL maps to `/config/www/` on disk)
+
+### Step 3: Add the resource
+1. Go to **Settings → Dashboards → ⋮ (3-dot menu top right) → Resources**
+2. Click **+ Add Resource**
+3. URL: `/local/community/avinor-flight-card/avinor-flight-card.js`
+4. Resource type: **JavaScript Module**
+5. Click **Create**
+
+### Step 4: Clear browser cache and restart
+- Press **Ctrl+Shift+R** (hard refresh)
+- Optionally restart Home Assistant for good measure
+
+### Step 5: Add the card
+Method A - Card picker (if visible):
+1. Edit dashboard → Add Card
+2. Search for "Avinor Flight Card"
+3. Select it and configure entity
+
+Method B - Manual YAML (always works):
+1. Edit dashboard → Add Card → Manual
+2. Paste:
+```yaml
+type: custom:avinor-flight-card
+entity: sensor.avinor_osl_a
+title: Avganger OSL
+```
+
+### Troubleshooting
+- **404 error:** File not in `/config/www/community/avinor-flight-card/avinor-flight-card.js`
+- **Card not in picker:** Use manual YAML method
+- **No data:** Check that sensor entity name matches (lowercase with underscores)
 
 ## Configuration
 

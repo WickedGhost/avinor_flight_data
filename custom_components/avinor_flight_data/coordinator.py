@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -37,6 +37,7 @@ class AvinorCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
         )
         self._api = api
         self._conf = conf
+        self._last_data: Optional[Dict[str, Any]] = None
 
     async def _async_update_data(self) -> Dict[str, Any]:
         try:
@@ -46,6 +47,14 @@ class AvinorCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
                 time_from=self._conf.get(CONF_TIME_FROM),
                 time_to=self._conf.get(CONF_TIME_TO),
             )
+            # Keep a copy as last known good data
+            self._last_data = flights
             return flights
         except Exception as err:  # noqa: BLE001
-            raise UpdateFailed(str(err)) from err
+            # Graceful fallback: if we have previous data, keep entity available with stale data.
+            if self._last_data is not None:
+                _LOGGER.warning("Avinor update failed, serving cached data: %s", err)
+                return self._last_data
+            # First update and no cache: return an empty dataset instead of making entity unavailable
+            _LOGGER.error("Avinor initial update failed, returning empty dataset: %s", err)
+            return {"lastUpdate": None, "flights": []}

@@ -24,6 +24,22 @@ from .api import AvinorApiClient
 
 _LOGGER = logging.getLogger(__name__)
 
+# Attempt to import selector helpers (available in modern Home Assistant). Fallback if missing.
+SELECTORS_AVAILABLE = False
+try:
+    from homeassistant.helpers.selector import (
+        selector,
+        SelectSelector,
+        SelectSelectorConfig,
+        SelectSelectorMode,
+        SelectOptionDict,
+    )
+    SELECTORS_AVAILABLE = True
+except ImportError:
+    pass
+except Exception as e:
+    _LOGGER.debug("Selector import failed: %s", e)
+
 
 class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Avinor Flight Data."""
@@ -41,32 +57,23 @@ class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         airports = await _async_fetch_airports(self.hass)
 
-        try:
-            if airports:
-                airport_field = vol.In([a["iata"] for a in airports])
-            else:
-                # Allow manual 3-letter IATA input as a safe fallback
-                airport_field = vol.All(str, vol.Length(min=3, max=3), lambda s: s.upper())
+        # Build airport field - use simple vol.In for reliability
+        if airports:
+            # Create a dict for dropdown display (HA will show keys with values)
+            airport_choices = {a["iata"]: f"{a['iata']} - {a['name']}" for a in airports}
+            airport_field = vol.In(airport_choices)
+        else:
+            # Manual 3-letter input fallback
+            airport_field = vol.All(str, vol.Length(min=3, max=3), lambda s: s.upper())
 
-            data_schema = vol.Schema(
-                {
-                    vol.Required(CONF_AIRPORT): airport_field,
-                    vol.Required(CONF_DIRECTION, default="A"): vol.In(["A", "D"]),
-                    vol.Optional(CONF_TIME_FROM, default=DEFAULT_TIME_FROM): vol.All(int, vol.Range(min=0, max=72)),
-                    vol.Optional(CONF_TIME_TO, default=DEFAULT_TIME_TO): vol.All(int, vol.Range(min=0, max=72)),
-                }
-            )
-        except Exception as err:  # noqa: BLE001
-            _LOGGER.error("Building config schema failed: %s", err)
-            # Ultimate fallback: all as strings/ints
-            data_schema = vol.Schema(
-                {
-                    vol.Required(CONF_AIRPORT): str,
-                    vol.Required(CONF_DIRECTION, default="A"): vol.In(["A", "D"]),
-                    vol.Optional(CONF_TIME_FROM, default=DEFAULT_TIME_FROM): int,
-                    vol.Optional(CONF_TIME_TO, default=DEFAULT_TIME_TO): int,
-                }
-            )
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_AIRPORT): airport_field,
+                vol.Required(CONF_DIRECTION, default="A"): vol.In({"A": "A (Arrivals)", "D": "D (Departures)"}),
+                vol.Optional(CONF_TIME_FROM, default=DEFAULT_TIME_FROM): vol.All(int, vol.Range(min=0, max=72)),
+                vol.Optional(CONF_TIME_TO, default=DEFAULT_TIME_TO): vol.All(int, vol.Range(min=0, max=72)),
+            }
+        )
 
         return self.async_show_form(
             step_id="user",
@@ -101,30 +108,21 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
         time_from_default = current.get(CONF_TIME_FROM)
         time_to_default = current.get(CONF_TIME_TO)
 
-        try:
-            if airports:
-                airport_field = vol.In([a["iata"] for a in airports])
-            else:
-                airport_field = vol.All(str, vol.Length(min=3, max=3), lambda s: s.upper())
+        # Build airport field - use simple vol.In for reliability
+        if airports:
+            airport_choices = {a["iata"]: f"{a['iata']} - {a['name']}" for a in airports}
+            airport_field = vol.In(airport_choices)
+        else:
+            airport_field = vol.All(str, vol.Length(min=3, max=3), lambda s: s.upper())
 
-            data_schema = vol.Schema(
-                {
-                    vol.Optional(CONF_AIRPORT, default=airport_default): airport_field,
-                    vol.Optional(CONF_DIRECTION, default=direction_default): vol.In(["A", "D"]),
-                    vol.Optional(CONF_TIME_FROM, default=time_from_default): vol.All(int, vol.Range(min=0, max=72)),
-                    vol.Optional(CONF_TIME_TO, default=time_to_default): vol.All(int, vol.Range(min=0, max=72)),
-                }
-            )
-        except Exception as err:  # noqa: BLE001
-            _LOGGER.error("Building options schema failed: %s", err)
-            data_schema = vol.Schema(
-                {
-                    vol.Optional(CONF_AIRPORT, default=airport_default): str,
-                    vol.Optional(CONF_DIRECTION, default=direction_default): vol.In(["A", "D"]),
-                    vol.Optional(CONF_TIME_FROM, default=time_from_default): int,
-                    vol.Optional(CONF_TIME_TO, default=time_to_default): int,
-                }
-            )
+        data_schema = vol.Schema(
+            {
+                vol.Optional(CONF_AIRPORT, default=airport_default): airport_field,
+                vol.Optional(CONF_DIRECTION, default=direction_default): vol.In({"A": "A (Arrivals)", "D": "D (Departures)"}),
+                vol.Optional(CONF_TIME_FROM, default=time_from_default): vol.All(int, vol.Range(min=0, max=72)),
+                vol.Optional(CONF_TIME_TO, default=time_to_default): vol.All(int, vol.Range(min=0, max=72)),
+            }
+        )
         return self.async_show_form(step_id="init", data_schema=data_schema)
 
 
