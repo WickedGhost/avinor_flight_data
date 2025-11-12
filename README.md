@@ -122,6 +122,11 @@ The card reads the flights from the sensor's attributes and renders a table with
 
 ## Changes
 
+- 0.2.1
+	- Restructure: integration-only repo; Lovelace card moved to separate repository.
+	- Updated HACS/Hassfest workflows to pass validation.
+	- Updated documentation for installing the card via HACS Frontend from its repo.
+
 - 0.2.0
 	- Fix Python 3.10 compatibility in integration setup.
 	- More robust API error handling (timeouts, HTTP and connection errors logged clearly).
