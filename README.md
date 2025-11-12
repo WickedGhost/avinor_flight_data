@@ -1,103 +1,107 @@
-# avinor_flight_data
-Henter flydata fra Avinor og eksponerer dem som sensorer i Home Assistant.
-# Avinor Flight Data (Home Assistant HACS)
+# Avinor Flight Data (Home Assistant Integration + Card)
 
-Custom integration and Lovelace card to show Avinor flight data in Home Assistant.
+Complete solution to display Avinor flight data in Home Assistant with a beautiful table card.
 
-Data source: Flydata fra Avinor – https://partner.avinor.no/tjenester/flydata/
+**Data source:** Flydata fra Avinor – https://partner.avinor.no/tjenester/flydata/
 
-This repository contains:
-- A Home Assistant custom integration (`custom_components/avinor_flight_data`) that fetches flights for a selected airport and direction, within a time window.
-- A simple Lovelace card (`www/community/avinor-flight-card/avinor-flight-card.js`) that renders a table with one row per flight and the requested columns.
+## 📦 What's Included
 
-## Features
+This repository provides both:
+- **🔧 Integration** (`custom_components/avinor_flight_data`) - Fetches flight data as Home Assistant sensors
+- **🎨 Lovelace Card** (`www/community/avinor-flight-card/`) - Beautiful table display with smart columns
 
-- Configure per entry:
-	- Airport (IATA) – searchable dropdown
-	- Direction – A (Arrivals) or D (Departures)
-	- TimeFrom (hours back, default 1)
-	- TimeTo (hours forward, default 7)
-- Updates every 3 minutes (per Avinor guidance)
-- Sensor state = number of flights; attributes include flights list and metadata
-- Lovelace card shows a table with columns: flightId, dom_int, schedule_time, airport, check_in, gate, status code
+## ✨ Features
 
-## Installation (HACS)
+### Integration Features
+- **🛫 Airport Selection** - 300+ airports via searchable dropdown
+- **📍 Direction Choice** - Arrivals (A) or Departures (D)
+- **⏰ Time Window** - Configurable hours back/forward (default: 1h back, 7h forward)
+- **🔄 Auto Updates** - Every 3 minutes (per Avinor guidance)
+- **🌐 Multi-language** - Norwegian and English support
 
-1) In HACS, add this repository as a custom repository (type: Integration).
-2) Install "Avinor Flight Data".
-3) Restart Home Assistant.
+### Card Features
+- **🎯 Smart Layout** - Hides Check-in/Gate columns for arrivals
+- **🌍 Timezone Support** - Shows local time (not UTC)
+- **🏷️ Readable Labels** - Airport names instead of codes (OSL → Oslo)
+- **📊 Status Descriptions** - Human-readable status (D → Departed)
+- **🔍 Visual Editor** - Easy configuration through UI
+- **📱 responsive Design** - Works on all devices
 
-## Lovelace Card Installation
+## 🚀 Quick Installation (HACS)
 
-The card displays flight data in a table. Follow these steps carefully.
+### Step 1: Install via HACS Frontend
+1. **HACS → Frontend → ⋮ Menu → Custom Repositories**
+2. **Add Repository**: 
+   - Repository: `https://github.com/WickedGhost/avinor_flight_data`
+   - Category: **Lovelace**
+3. **Install**: Search "Avinor Flight Data" → Install
+4. **Restart**: Home Assistant restart required
 
-### Step 1: Create the directory structure
-SSH into Home Assistant or use File Editor and create:
-```
-/config/www/community/avinor-flight-card/
-```
+### Step 2: Enable the Integration
+1. **Settings → Devices & Services → Add Integration**
+2. **Search**: "Avinor Flight Data"
+3. **Configure**: Select airport, direction, and time range
 
-### Step 2: Copy the file
-Copy `www/community/avinor-flight-card/avinor-flight-card.js` from this repo to:
-```
-/config/www/community/avinor-flight-card/avinor-flight-card.js
-```
+## 🎨 Lovelace Card Setup
 
-**Verify the file exists:** You should be able to access:
-```
-http://your-ha-ip:8123/local/community/avinor-flight-card/avinor-flight-card.js
-```
-(Note: `/local/` in the URL maps to `/config/www/` on disk)
+### Step 3: Add the Card (Automatic)
+After HACS installation, the card is automatically available:
 
-### Step 3: Add the resource
-1. Go to **Settings → Dashboards → ⋮ (3-dot menu top right) → Resources**
-2. Click **+ Add Resource**
-3. URL: `/local/community/avinor-flight-card/avinor-flight-card.js`
-4. Resource type: **JavaScript Module**
-5. Click **Create**
+1. **Edit Dashboard** → **Add Card**
+2. **Search**: "Avinor Flight Card" 
+3. **Configure**: 
+   - **Entity**: Select your flight sensor (e.g., `sensor.avinor_osl_d`)
+   - **Title**: Optional custom title
 
-### Step 4: Clear browser cache and restart
-- Press **Ctrl+Shift+R** (hard refresh)
-- Optionally restart Home Assistant for good measure
-
-### Step 5: Add the card
-Method A - Card picker (if visible):
-1. Edit dashboard → Add Card
-2. Search for "Avinor Flight Card"
-3. Select it and configure entity
-
-Method B - Manual YAML (always works):
-1. Edit dashboard → Add Card → Manual
-2. Paste:
+### Alternative: Manual YAML
 ```yaml
 type: custom:avinor-flight-card
-entity: sensor.avinor_osl_a
-title: Avganger OSL
+entity: sensor.avinor_osl_d    # Required: Your flight sensor
+title: "Oslo Departures"       # Optional: Custom title
 ```
 
-### Troubleshooting
-- **404 error:** File not in `/config/www/community/avinor-flight-card/avinor-flight-card.js`
-- **Card not in picker:** Use manual YAML method
-- **No data:** Check that sensor entity name matches (lowercase with underscores)
+### 🔧 Troubleshooting
+- **Card not in picker**: Hard refresh browser (Ctrl+Shift+R), or use manual YAML
+- **Integration not found**: Check Settings → Devices & Services for "Avinor Flight Data"
+- **No data showing**: Verify sensor exists in Developer Tools → States
+- **Resource 404**: The card file should auto-install to `/local/community/avinor-flight-card/`
 
-## Configuration
+## ⚙️ Integration Configuration
 
-Add the integration via Settings → Devices & Services → Add Integration → "Avinor Flight Data".
+The integration is included with the HACS installation. Configure it as follows:
 
-Select:
-- Airport (IATA)
-- Direction (A=Arrivals, D=Departures)
-- Time from (hours back)
-- Time to (hours forward)
+### Configuration Options:
+- **🛫 Airport**: Select from 300+ airports (searchable dropdown)
+- **📍 Direction**: A (Arrivals) or D (Departures)  
+- **⏰ Time From**: Hours back from now (default: 1)
+- **⏰ Time To**: Hours forward from now (default: 7)
 
-The integration creates one sensor per configuration, named like `sensor.avinor_OSL_A` with:
+### Sensor Output
+Creates sensor like `sensor.avinor_osl_d` with:
+- **State**: Number of flights found
+- **Attributes**:
+  - `airport`, `direction`, `time_from`, `time_to`, `last_update`
+  - `flights`: Array of flight objects with all flight details
 
-- state: number of flights
-- attributes:
-	- airport, direction, time_from, time_to, last_update
-	- flights: array of flight objects with keys: flightId, dom_int, schedule_time, airport, check_in, gate, status_code
+## 📊 Card Display Features
 
-## Lovelace Card Usage
+The Lovelace card automatically adapts based on flight direction:
+
+### Departures (D) - Shows All Columns:
+| Flight | Type | Scheduled | Airport | Check-in | Gate | Status |
+|--------|------|-----------|---------|----------|------|--------|
+| SK123 | International | 14:30 | Copenhagen | 12:30 | A15 | Boarding |
+
+### Arrivals (A) - Hides Irrelevant Columns:
+| Flight | Type | Scheduled | Airport | Status |
+|--------|------|-----------|---------|--------|
+| SK456 | Schengen | 15:45 | Stockholm | Landed |
+
+### Smart Features:
+- **🌍 Timezone Aware**: Shows local time (not UTC)
+- **🏷️ Human Readable**: "Oslo" instead of "OSL", "Departed" instead of "D"
+- **📱 Responsive**: Adapts to screen size
+- **✨ Visual Editor**: Configure through Home Assistant UI
 
 Example card configuration:
 
