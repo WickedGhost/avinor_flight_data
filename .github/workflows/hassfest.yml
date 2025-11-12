@@ -24,4 +24,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Hassfest
-        uses: home-assistant/actions/hassfest@v2025-11-01
+        uses: home-assistant/actions/hassfest@v1
