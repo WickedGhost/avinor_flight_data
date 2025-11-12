@@ -1,14 +1,16 @@
-# Avinor Flight Data (Home Assistant Integration + Card)
+# Avinor Flight Data (Home Assistant Integration)
 
-Complete solution to display Avinor flight data in Home Assistant with a beautiful table card.
+Custom integration to fetch and expose Avinor flight data in Home Assistant. A separate Lovelace card is available to visualize the data in a table (see below).
 
 **Data source:** Flydata fra Avinor – https://partner.avinor.no/tjenester/flydata/
 
 ## 📦 What's Included
 
-This repository provides both:
-- **🔧 Integration** (`custom_components/avinor_flight_data`) - Fetches flight data as Home Assistant sensors
-- **🎨 Lovelace Card** (`www/community/avinor-flight-card/`) - Beautiful table display with smart columns
+This repository provides:
+- **🔧 Integration** (`custom_components/avinor_flight_data`) – Fetches flight data as Home Assistant sensors
+
+For the UI:
+- **🎨 Lovelace Card (separate repo)** – https://github.com/WickedGhost/avinor-flight-card
 
 ## ✨ Features
 
@@ -27,33 +29,32 @@ This repository provides both:
 - **🔍 Visual Editor** - Easy configuration through UI
 - **📱 responsive Design** - Works on all devices
 
-## 🚀 Quick Installation (HACS)
+## 🚀 Installation (HACS)
 
-### Step 1: Install via HACS Frontend
-1. **HACS → Frontend → ⋮ Menu → Custom Repositories**
-2. **Add Repository**: 
-   - Repository: `https://github.com/WickedGhost/avinor_flight_data`
-   - Category: **Lovelace**
-3. **Install**: Search "Avinor Flight Data" → Install
-4. **Restart**: Home Assistant restart required
+### 1) Install the Integration
+1. HACS → Integrations → ⋮ Menu → Custom Repositories
+2. Add repository: `https://github.com/WickedGhost/avinor_flight_data` (Category: Integration)
+3. Install "Avinor Flight Data"
+4. Restart Home Assistant
+5. Go to Settings → Devices & Services → Add Integration → "Avinor Flight Data"
+6. Configure: airport, direction, time window
 
-### Step 2: Enable the Integration
-1. **Settings → Devices & Services → Add Integration**
-2. **Search**: "Avinor Flight Data"
-3. **Configure**: Select airport, direction, and time range
+## 🎨 Lovelace Card (separate repository)
 
-## 🎨 Lovelace Card Setup
+To visualize the flights in a table, install the companion card from its own repository:
 
-### Step 3: Add the Card (Automatic)
-After HACS installation, the card is automatically available:
+Repository: https://github.com/WickedGhost/avinor-flight-card
 
-1. **Edit Dashboard** → **Add Card**
-2. **Search**: "Avinor Flight Card" 
-3. **Configure**: 
-   - **Entity**: Select your flight sensor (e.g., `sensor.avinor_osl_d`)
-   - **Title**: Optional custom title
+### Install via HACS (Frontend)
+1. HACS → Frontend → ⋮ Menu → Custom Repositories
+2. Add repository: `https://github.com/WickedGhost/avinor-flight-card` (Category: Lovelace)
+3. Install "Avinor Flight Card"
+4. If needed, add resource: Settings → Dashboards → Resources →
+	- URL: `/hacsfiles/avinor-flight-card/avinor-flight-card.js`
+	- Resource type: JavaScript Module
+5. Edit dashboard → Add Card → Search "Avinor Flight Card"
 
-### Alternative: Manual YAML
+### Manual YAML (alternative)
 ```yaml
 type: custom:avinor-flight-card
 entity: sensor.avinor_osl_d    # Required: Your flight sensor
@@ -61,10 +62,10 @@ title: "Oslo Departures"       # Optional: Custom title
 ```
 
 ### 🔧 Troubleshooting
-- **Card not in picker**: Hard refresh browser (Ctrl+Shift+R), or use manual YAML
+- **Card not in picker**: Hard refresh browser (Ctrl+Shift+R), ensure resource added, or use manual YAML
 - **Integration not found**: Check Settings → Devices & Services for "Avinor Flight Data"
 - **No data showing**: Verify sensor exists in Developer Tools → States
-- **Resource 404**: The card file should auto-install to `/local/community/avinor-flight-card/`
+-- **Resource 404**: Verify resource path `/hacsfiles/avinor-flight-card/avinor-flight-card.js` is present
 
 ## ⚙️ Integration Configuration
 
@@ -115,7 +116,7 @@ The card reads the flights from the sensor's attributes and renders a table with
 
 ## Notes
 
-- Times from the API are UTC (ISO 8601). The card displays them as-is.
+- Times from the API are UTC (ISO 8601). The card converts and displays local time.
 - Avinor recommends polling every 3 minutes and caching on your side; this integration follows that guidance.
 - If the airport list cannot be fetched during setup, a small built-in fallback list (OSL, BGO, TRD, SVG) is used.
 
