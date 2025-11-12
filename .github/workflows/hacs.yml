@@ -22,8 +22,3 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
-
-      - name: HACS - Plugin
-        uses: hacs/action@main
-        with:
-          category: plugin

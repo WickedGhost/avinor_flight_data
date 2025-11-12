@@ -2,6 +2,5 @@
   "name": "Avinor Flight Data",
   "render_readme": true,
   "homeassistant": "2024.6.0",
-    "filename": "avinor-flight-card.js",
   "content_in_root": false
 }
