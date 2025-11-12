@@ -17,23 +17,23 @@
           "time_to": "Include flights up to this many hours ahead (0-72 hours)."
         }
       }
-    },
-    "options": {
-      "step": {
-        "init": {
-          "title": "Configure Avinor Flight Data",
-          "data": {
-            "airport": "Airport",
-            "direction": "Flight Direction",
-            "time_from": "Hours Back",
-            "time_to": "Hours Forward"
-          },
-          "data_description": {
-            "airport": "Change the airport to monitor a different location.",
-            "direction": "Switch between arrivals and departures.",
-            "time_from": "Adjust the time window for past flights (0-72 hours).",
-            "time_to": "Adjust the time window for future flights (0-72 hours)."
-          }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configure Avinor Flight Data",
+        "data": {
+          "airport": "Airport",
+          "direction": "Flight Direction",
+          "time_from": "Hours Back",
+          "time_to": "Hours Forward"
+        },
+        "data_description": {
+          "airport": "Change the airport to monitor a different location.",
+          "direction": "Switch between arrivals and departures.",
+          "time_from": "Adjust the time window for past flights (0-72 hours).",
+          "time_to": "Adjust the time window for future flights (0-72 hours)."
         }
       }
     }

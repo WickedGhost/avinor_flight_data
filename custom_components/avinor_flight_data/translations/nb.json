@@ -17,23 +17,23 @@
           "time_to": "Inkluder fly opptil dette antall timer frem (0-72 timer)."
         }
       }
-    },
-    "options": {
-      "step": {
-        "init": {
-          "title": "Konfigurer Avinor Flydata",
-          "data": {
-            "airport": "Flyplass",
-            "direction": "Flyretning",
-            "time_from": "Timer tilbake",
-            "time_to": "Timer frem"
-          },
-          "data_description": {
-            "airport": "Bytt flyplass for å overvåke en annen lokasjon.",
-            "direction": "Bytt mellom ankomster og avganger.",
-            "time_from": "Juster tidsvinduet for tidligere fly (0-72 timer).",
-            "time_to": "Juster tidsvinduet for fremtidige fly (0-72 timer)."
-          }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Konfigurer Avinor Flydata",
+        "data": {
+          "airport": "Flyplass",
+          "direction": "Flyretning",
+          "time_from": "Timer tilbake",
+          "time_to": "Timer frem"
+        },
+        "data_description": {
+          "airport": "Bytt flyplass for å overvåke en annen lokasjon.",
+          "direction": "Bytt mellom ankomster og avganger.",
+          "time_from": "Juster tidsvinduet for tidligere fly (0-72 timer).",
+          "time_to": "Juster tidsvinduet for fremtidige fly (0-72 timer)."
         }
       }
     }
