@@ -8,5 +8,5 @@
   "issue_tracker": "https://github.com/WickedGhost/avinor_flight_data/issues",
   "loggers": ["custom_components.avinor_flight_data"],
   "requirements": ["xmltodict==0.13.0"],
-  "version": "1.0.0"
+  "version": "1.0.3"
 }
