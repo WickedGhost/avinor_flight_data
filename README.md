@@ -112,6 +112,10 @@ entity: sensor.avinor_OSL_A
 title: Ankomster OSL
 ```
 
+## 🖼️ Example
+
+![Example Avinor Flight Card output](example_afd.png)
+
 The card reads the flights from the sensor's attributes and renders a table with the required columns.
 
 ## Notes
