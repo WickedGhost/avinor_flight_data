@@ -2,6 +2,16 @@
 
 Custom Home Assistant integration that keeps your dashboards up to date with arrivals and departures from the official Avinor data feed.
 
+[![GitHub Release][releases-shield]][releases]
+[![GitHub Activity][commits-shield]][commits]
+[![License][license-shield]](LICENSE)
+[![hacs][hacsbadge]][hacs]
+
+![Project Maintenance][maintenance-shield]
+[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
+
+[![Community Forum][forum-shield]][forum]
+
 **Data source:** Flydata fra Avinor – https://partner.avinor.no/tjenester/flydata/
 
 ## Table of Contents
