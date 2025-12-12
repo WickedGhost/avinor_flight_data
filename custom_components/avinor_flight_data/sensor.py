@@ -16,7 +16,27 @@ from .const import (
     CONF_DIRECTION,
     CONF_TIME_FROM,
     CONF_TIME_TO,
+    CONF_FLIGHT_TYPE,
 )
+
+
+def _compact_flight(flight: dict[str, Any]) -> dict[str, Any]:
+    """Return a small, HA-friendly representation of a flight.
+
+    Keeps the full `flights` attribute untouched, but provides a compact list
+    for dashboards and templates.
+    """
+    return {
+        "flightId": flight.get("flightId"),
+        "airline": flight.get("airline"),
+        "schedule_time": flight.get("schedule_time"),
+        "arr_dep": flight.get("arr_dep"),
+        "airport": flight.get("airport"),
+        "status_code": flight.get("status_code"),
+        "gate": flight.get("gate"),
+        "check_in": flight.get("check_in"),
+        "dom_int": flight.get("dom_int"),
+    }
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -36,8 +56,12 @@ class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
         conf = entry.data
         airport = conf[CONF_AIRPORT]
         direction = conf[CONF_DIRECTION]
-        self._attr_unique_id = f"avinor_{airport}_{direction}"
-        self._attr_name = f"Avinor {airport} {direction}"
+        flight_type = (conf.get(CONF_FLIGHT_TYPE) or "").strip().upper() or "ALL"
+
+        # Include flight_type so multiple entities can exist for same airport/direction.
+        self._attr_unique_id = f"avinor_{airport}_{direction}_{flight_type}"
+        name_suffix = "All" if flight_type == "ALL" else flight_type
+        self._attr_name = f"Avinor {airport} {direction} {name_suffix}"
 
     @property
     def device_info(self):
@@ -59,13 +83,19 @@ class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         conf: Dict[str, Any] = {**self._entry.data, **self._entry.options}
         data = self.coordinator.data or {}
+        flights = data.get("flights", [])
+        compact_max = 10
+        flights_summary = [_compact_flight(f) for f in flights[:compact_max]]
         return {
             "airport": conf.get(CONF_AIRPORT),
             "direction": conf.get(CONF_DIRECTION),
+            "flight_type": conf.get(CONF_FLIGHT_TYPE),
             "time_from": conf.get(CONF_TIME_FROM),
             "time_to": conf.get(CONF_TIME_TO),
             "last_update": data.get("lastUpdate"),
-            "flights": data.get("flights", []),
+            "flights": flights,
+            "flights_summary": flights_summary,
+            "flights_summary_max": compact_max,
         }
 
     @property
