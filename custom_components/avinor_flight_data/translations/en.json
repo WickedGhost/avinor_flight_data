@@ -8,13 +8,15 @@
           "airport": "Airport",
           "direction": "Flight Direction",
           "time_from": "Hours Back",
-          "time_to": "Hours Forward"
+          "time_to": "Hours Forward",
+          "flight_type": "Flight type"
         },
         "data_description": {
           "airport": "Select the airport to monitor (IATA code). Search by typing the airport name or code.",
           "direction": "Choose whether to show arriving or departing flights.",
           "time_from": "Include flights from this many hours ago (0-72 hours).",
-          "time_to": "Include flights up to this many hours ahead (0-72 hours)."
+          "time_to": "Include flights up to this many hours ahead (0-72 hours).",
+          "flight_type": "Filter by flight type. All = no filtering."
         }
       }
     }
@@ -27,13 +29,15 @@
           "airport": "Airport",
           "direction": "Flight Direction",
           "time_from": "Hours Back",
-          "time_to": "Hours Forward"
+          "time_to": "Hours Forward",
+          "flight_type": "Flight type"
         },
         "data_description": {
           "airport": "Change the airport to monitor a different location.",
           "direction": "Switch between arrivals and departures.",
           "time_from": "Adjust the time window for past flights (0-72 hours).",
-          "time_to": "Adjust the time window for future flights (0-72 hours)."
+          "time_to": "Adjust the time window for future flights (0-72 hours).",
+          "flight_type": "Filter by flight type. All = no filtering."
         }
       }
     }

@@ -5,8 +5,13 @@ CONF_DIRECTION = "direction"
 CONF_TIME_FROM = "time_from"
 CONF_TIME_TO = "time_to"
 
+# Client-side filtering options
+CONF_FLIGHT_TYPE = "flight_type"  # Avinor dom_int field
+
 DEFAULT_TIME_FROM = 1
 DEFAULT_TIME_TO = 7
+
+DEFAULT_FLIGHT_TYPE = ""  # empty = all
 
 PLATFORMS = ["sensor"]
 

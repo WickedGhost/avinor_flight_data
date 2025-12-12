@@ -2,6 +2,8 @@ import asyncio
 import pytest
 
 from custom_components.avinor_flight_data.api import AvinorApiClient
+from custom_components.avinor_flight_data.coordinator import _apply_flight_type_filter
+from custom_components.avinor_flight_data.sensor import _compact_flight
 
 
 class StubClient(AvinorApiClient):
@@ -80,3 +82,44 @@ async def test_async_get_airports_parsing_and_sorting():
         {"iata": "BGO", "name": "Bergen"},
         {"iata": "OSL", "name": "Oslo"},
     ]
+
+
+def test_apply_flight_type_filter():
+    flights = [
+        {"flightId": "SK1", "dom_int": "D"},
+        {"flightId": "SK2", "dom_int": "I"},
+        {"flightId": "SK3", "dom_int": "S"},
+        {"flightId": "SK4", "dom_int": None},
+    ]
+    assert [f["flightId"] for f in _apply_flight_type_filter(flights, "")] == ["SK1", "SK2", "SK3", "SK4"]
+    assert [f["flightId"] for f in _apply_flight_type_filter(flights, "D")] == ["SK1"]
+    assert [f["flightId"] for f in _apply_flight_type_filter(flights, "s")] == ["SK3"]
+
+
+def test_compact_flight_contains_expected_keys():
+    flight = {
+        "flightId": "DY123",
+        "airline": "DY",
+        "schedule_time": "2025-01-01T13:00:00Z",
+        "arr_dep": "D",
+        "airport": "BGO",
+        "status_code": "BRD",
+        "gate": "A12",
+        "check_in": "1",
+        "dom_int": "D",
+        "uniqueId": "u1",
+        "status_time": "2025-01-01T12:30:00Z",
+    }
+
+    compact = _compact_flight(flight)
+    assert compact == {
+        "flightId": "DY123",
+        "airline": "DY",
+        "schedule_time": "2025-01-01T13:00:00Z",
+        "arr_dep": "D",
+        "airport": "BGO",
+        "status_code": "BRD",
+        "gate": "A12",
+        "check_in": "1",
+        "dom_int": "D",
+    }

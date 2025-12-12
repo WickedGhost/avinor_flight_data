@@ -17,8 +17,10 @@ from .const import (
     CONF_DIRECTION,
     CONF_TIME_FROM,
     CONF_TIME_TO,
+    CONF_FLIGHT_TYPE,
     DEFAULT_TIME_FROM,
     DEFAULT_TIME_TO,
+    DEFAULT_FLIGHT_TYPE,
 )
 from .api import AvinorApiClient
 
@@ -50,10 +52,17 @@ class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: Dict[str, str] = {}
 
         if user_input is not None:
-            # Unique key: airport + direction
-            await self.async_set_unique_id(f"{user_input[CONF_AIRPORT]}_{user_input[CONF_DIRECTION]}")
+            # Unique key: airport + direction + flight type (allows multiple entries per airport/direction)
+            flight_type = (user_input.get(CONF_FLIGHT_TYPE) or "").strip().upper() or "ALL"
+            await self.async_set_unique_id(
+                f"{user_input[CONF_AIRPORT]}_{user_input[CONF_DIRECTION]}_{flight_type}"
+            )
             self._abort_if_unique_id_configured()
-            return self.async_create_entry(title=f"{user_input[CONF_AIRPORT]} {user_input[CONF_DIRECTION]}", data=user_input)
+            title_suffix = "All" if flight_type == "ALL" else flight_type
+            return self.async_create_entry(
+                title=f"{user_input[CONF_AIRPORT]} {user_input[CONF_DIRECTION]} {title_suffix}",
+                data=user_input,
+            )
 
         airports = await _async_fetch_airports(self.hass)
 
@@ -79,6 +88,12 @@ class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_TIME_TO, default=DEFAULT_TIME_TO, description={"suggested_value": 7}): vol.All(
                     int, vol.Range(min=0, max=72)
                 ),
+                vol.Optional(CONF_FLIGHT_TYPE, default=DEFAULT_FLIGHT_TYPE): vol.In({
+                    "": "All",
+                    "D": "Domestic",
+                    "I": "International",
+                    "S": "Schengen",
+                }),
             }
         )
 
@@ -114,6 +129,7 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
         direction_default = current.get(CONF_DIRECTION, "A")
         time_from_default = current.get(CONF_TIME_FROM)
         time_to_default = current.get(CONF_TIME_TO)
+        flight_type_default = current.get(CONF_FLIGHT_TYPE, DEFAULT_FLIGHT_TYPE)
 
         # Build airport field - use simple vol.In for reliability
         if airports:
@@ -135,6 +151,12 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_TIME_TO, default=time_to_default, description={"suggested_value": time_to_default or 7}): vol.All(
                     int, vol.Range(min=0, max=72)
                 ),
+                vol.Optional(CONF_FLIGHT_TYPE, default=flight_type_default): vol.In({
+                    "": "All",
+                    "D": "Domestic",
+                    "I": "International",
+                    "S": "Schengen",
+                }),
             }
         )
         return self.async_show_form(step_id="init", data_schema=data_schema)
