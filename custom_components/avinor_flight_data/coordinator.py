@@ -13,22 +13,9 @@ from .const import (
     CONF_DIRECTION,
     CONF_TIME_FROM,
     CONF_TIME_TO,
-    CONF_FLIGHT_TYPE,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _apply_flight_type_filter(flights: list[dict[str, Any]], flight_type: str | None) -> list[dict[str, Any]]:
-    ft = (flight_type or "").strip().upper()
-    if not ft:
-        return flights
-    out: list[dict[str, Any]] = []
-    for flight in flights:
-        dom_int = str(flight.get("dom_int") or "").strip().upper()
-        if dom_int == ft:
-            out.append(flight)
-    return out
 
 
 class AvinorCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
@@ -59,11 +46,6 @@ class AvinorCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
                 direction=self._conf.get(CONF_DIRECTION),
                 time_from=self._conf.get(CONF_TIME_FROM),
                 time_to=self._conf.get(CONF_TIME_TO),
-            )
-
-            flights["flights"] = _apply_flight_type_filter(
-                flights.get("flights", []),
-                self._conf.get(CONF_FLIGHT_TYPE),
             )
 
             # Keep a copy as last known good data

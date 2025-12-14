@@ -39,6 +39,23 @@ def _compact_flight(flight: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _apply_flight_type_filter(flights: list[dict[str, Any]], flight_type: str | None) -> list[dict[str, Any]]:
+    """Filter a flight list by Avinor's `dom_int` field.
+
+    Implemented at the entity level to avoid affecting other entities that may
+    share the same coordinator data.
+    """
+    ft = (flight_type or "").strip().upper()
+    if not ft:
+        return flights
+    out: list[dict[str, Any]] = []
+    for flight in flights:
+        dom_int = str(flight.get("dom_int") or "").strip().upper()
+        if dom_int == ft:
+            out.append(flight)
+    return out
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data["coordinator"]
@@ -76,14 +93,16 @@ class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self) -> Any:
+        conf: Dict[str, Any] = {**self._entry.data, **self._entry.options}
         flights = self.coordinator.data.get("flights", []) if self.coordinator.data else []
+        flights = _apply_flight_type_filter(flights, conf.get(CONF_FLIGHT_TYPE))
         return len(flights)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         conf: Dict[str, Any] = {**self._entry.data, **self._entry.options}
         data = self.coordinator.data or {}
-        flights = data.get("flights", [])
+        flights = _apply_flight_type_filter(data.get("flights", []), conf.get(CONF_FLIGHT_TYPE))
         compact_max = 10
         flights_summary = [_compact_flight(f) for f in flights[:compact_max]]
         return {
