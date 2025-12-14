@@ -2,8 +2,7 @@ import asyncio
 import pytest
 
 from custom_components.avinor_flight_data.api import AvinorApiClient
-from custom_components.avinor_flight_data.coordinator import _apply_flight_type_filter
-from custom_components.avinor_flight_data.sensor import _compact_flight
+from custom_components.avinor_flight_data.sensor import _apply_flight_type_filter, _compact_flight
 
 
 class StubClient(AvinorApiClient):
