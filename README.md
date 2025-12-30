@@ -3,7 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-blue.svg)](https://hacs.xyz/)
 [![Hassfest](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml)
 [![HACS Validation](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml)
-[![Version 1.0.7](https://img.shields.io/badge/Version-1.0.7-orange.svg)](custom_components/avinor_flight_data/manifest.json)
+[![Version 1.0.8](https://img.shields.io/badge/Version-1.0.8-orange.svg)](custom_components/avinor_flight_data/manifest.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Custom Home Assistant integration that keeps your dashboards up to date with arrivals and departures from the official Avinor data feed.
@@ -16,6 +16,7 @@ Custom Home Assistant integration that keeps your dashboards up to date with arr
 - [Features](#features)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Flight Details (Airlabs)](#flight-details-airlabs)
 - [Companion Lovelace Card](#companion-lovelace-card)
 - [Example Dashboard Card](#example-dashboard-card)
 - [Troubleshooting](#troubleshooting)
@@ -57,14 +58,55 @@ Custom Home Assistant integration that keeps your dashboards up to date with arr
 
 ## Configuration
 
-| Option       | Description                                           | Default |
-|--------------|-------------------------------------------------------|---------|
-| Airport      | Any Avinor airport (searchable list).                 | none    |
-| Direction    | `A` (arrivals) or `D` (departures).                   | `D`     |
-| Time from    | Hours back from now to include in results.            | `1`     |
-| Time to      | Hours forward from now to include in results.         | `7`     |
+| Option           | Description                                           | Default |
+|------------------|-------------------------------------------------------|---------|
+| Airport           | Any Avinor airport (searchable list).                 | none    |
+| Direction         | `A` (arrivals) or `D` (departures).                   | `D`     |
+| Time from         | Hours back from now to include in results.            | `1`     |
+| Time to           | Hours forward from now to include in results.         | `7`     |
+| Airlabs API key   | Optional API key used for flight details.             | none    |
 
 Each configured sensor reports the flight count as its state and exposes detailed flight data through the `flights` attribute.
+
+## Flight Details (Airlabs)
+
+This integration can optionally fetch details for a specific flight from the Airlabs Flight API:
+https://airlabs.co/docs/flight
+
+### Add your Airlabs API key
+
+1. In Home Assistant, go to Settings → Devices & Services.
+2. Find **Avinor Flight Data**.
+3. Open **Configure** / **Options**.
+4. Enter your key in the **airlabs_api_key** field.
+5. Submit/save.
+
+The key is optional. If you don’t set it, you can still call the service by passing `api_key` in the service data.
+
+### Service: `avinor_flight_data.get_flight_details`
+
+You can call this service from Developer Tools → Services, or from an automation.
+
+Minimal example (IATA flight id):
+
+```yaml
+service: avinor_flight_data.get_flight_details
+data:
+  flight_iata: DY123
+```
+
+Override the configured key (useful for testing):
+
+```yaml
+service: avinor_flight_data.get_flight_details
+data:
+  api_key: YOUR_AIRLABS_KEY
+  flight_iata: DY123
+```
+
+Notes:
+- Provide at least one of: `flight_iata`, `flight_icao`, or `flight_number`.
+- On Home Assistant versions that support service responses, the service returns the Airlabs `response` object.
 
 ## Companion Lovelace Card
 

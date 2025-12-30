@@ -1,0 +1,41 @@
+get_flight_details:
+  name: Get Flight Details (Airlabs)
+  description: >
+    Fetches details for a specific flight from the Airlabs Flight API.
+
+    If api_key is not provided, the integration will use the configured Airlabs API key
+    (set in the integration options).
+
+    If your Home Assistant version supports service responses, the service returns the
+    Airlabs `response` object.
+  fields:
+    config_entry_id:
+      name: Config entry id
+      description: Optional config entry id to select which configured Airlabs key to use.
+      example: 0123456789abcdef0123456789abcdef
+      selector:
+        text:
+    api_key:
+      name: Airlabs API key
+      description: Optional API key to use instead of the configured one.
+      example: your_airlabs_key
+      selector:
+        text:
+    flight_iata:
+      name: Flight IATA
+      description: Flight identifier in IATA format (e.g. DY123).
+      example: DY123
+      selector:
+        text:
+    flight_icao:
+      name: Flight ICAO
+      description: Flight identifier in ICAO format.
+      example: NAX123
+      selector:
+        text:
+    flight_number:
+      name: Flight number
+      description: Numeric flight number (provider-dependent).
+      example: "123"
+      selector:
+        text:
