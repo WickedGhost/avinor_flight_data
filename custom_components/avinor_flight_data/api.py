@@ -8,7 +8,7 @@ import aiohttp
 import async_timeout
 import xmltodict
 
-from .const import API_BASE, API_FLIGHTS, API_AIRPORTS
+from .const import API_BASE, API_FLIGHTS, API_AIRPORTS, AIRLABS_API_BASE, AIRLABS_API_FLIGHT_DETAILS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -166,3 +166,82 @@ class AvinorApiClient:
                 }
             )
         return result
+
+
+class AirlabsApiClient:
+    """Simple async client for Airlabs Flight API (JSON)."""
+
+    def __init__(self, session: aiohttp.ClientSession) -> None:
+        self._session = session
+
+    async def _get_json(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        try:
+            _LOGGER.debug("Airlabs request: url=%s params=%s", url, {k: v for k, v in (params or {}).items() if k != "api_key"})
+            async with async_timeout.timeout(30):
+                async with self._session.get(
+                    url,
+                    params=params,
+                    headers={"Accept": "application/json"},
+                ) as resp:
+                    resp.raise_for_status()
+                    return await resp.json(content_type=None)
+        except asyncio.TimeoutError as err:
+            _LOGGER.error("Airlabs API timeout fetching %s: %s", url, err)
+            raise
+        except aiohttp.ClientResponseError as err:
+            _LOGGER.error("Airlabs API HTTP error (%s) for %s: %s", err.status, url, err)
+            raise
+        except aiohttp.ClientConnectionError as err:
+            _LOGGER.error("Airlabs API connection error for %s: %s", url, err)
+            raise
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Airlabs API client error for %s: %s", url, err)
+            raise
+
+    async def async_get_flight_details(
+        self,
+        *,
+        api_key: str,
+        flight_iata: str | None = None,
+        flight_icao: str | None = None,
+        flight_number: str | None = None,
+    ) -> Dict[str, Any]:
+        """Fetch details for a specific flight using Airlabs.
+
+        Uses https://airlabs.co/docs/flight
+
+        One of `flight_iata`, `flight_icao`, or `flight_number` must be provided.
+        Returns the `response` object from Airlabs (or an empty dict if none).
+        """
+
+        if not api_key or not str(api_key).strip():
+            raise ValueError("api_key is required")
+
+        flight_iata = (flight_iata or "").strip() or None
+        flight_icao = (flight_icao or "").strip() or None
+        flight_number = (flight_number or "").strip() or None
+
+        if not (flight_iata or flight_icao or flight_number):
+            raise ValueError("One of flight_iata, flight_icao, flight_number is required")
+
+        params: Dict[str, Any] = {"api_key": api_key}
+        if flight_iata:
+            params["flight_iata"] = flight_iata
+        if flight_icao:
+            params["flight_icao"] = flight_icao
+        if flight_number:
+            params["flight_number"] = flight_number
+
+        url = f"{AIRLABS_API_BASE}{AIRLABS_API_FLIGHT_DETAILS}"
+        payload = await self._get_json(url, params=params)
+
+        # Airlabs typically returns {"request": ..., "response": ..., "error": ...}
+        if isinstance(payload, dict) and payload.get("error"):
+            message = payload.get("message") or payload.get("error")
+            raise RuntimeError(f"Airlabs API error: {message}")
+
+        if isinstance(payload, dict) and "response" in payload:
+            response = payload.get("response")
+            return response if isinstance(response, dict) else {"response": response}
+
+        return payload if isinstance(payload, dict) else {"response": payload}

@@ -2,6 +2,7 @@ import asyncio
 import pytest
 
 from custom_components.avinor_flight_data.api import AvinorApiClient
+from custom_components.avinor_flight_data.api import AirlabsApiClient
 from custom_components.avinor_flight_data.sensor import _apply_flight_type_filter, _compact_flight
 
 
@@ -15,6 +16,18 @@ class StubClient(AvinorApiClient):
         if "airportNames" in url:
             return self._airports_payload
         return self._flights_payload
+
+
+class StubAirlabsClient(AirlabsApiClient):
+    def __init__(self, payload):
+        self._payload = payload
+        self.last_url = None
+        self.last_params = None
+
+    async def _get_json(self, url: str, params=None):
+        self.last_url = url
+        self.last_params = params
+        return self._payload
 
 
 @pytest.mark.asyncio
@@ -122,3 +135,34 @@ def test_compact_flight_contains_expected_keys():
         "check_in": "1",
         "dom_int": "D",
     }
+
+
+@pytest.mark.asyncio
+async def test_airlabs_get_flight_details_requires_identifier():
+    client = StubAirlabsClient({"response": {}})
+    with pytest.raises(ValueError):
+        await client.async_get_flight_details(api_key="k")
+
+
+@pytest.mark.asyncio
+async def test_airlabs_get_flight_details_returns_response_object():
+    payload = {
+        "request": {"key": {"api_key": "***"}},
+        "response": {
+            "flight_iata": "DY123",
+            "status": "active",
+            "dep_iata": "OSL",
+        },
+    }
+    client = StubAirlabsClient(payload)
+    details = await client.async_get_flight_details(api_key="k", flight_iata="DY123")
+    assert details["flight_iata"] == "DY123"
+    assert client.last_params["flight_iata"] == "DY123"
+    assert client.last_params["api_key"] == "k"
+
+
+@pytest.mark.asyncio
+async def test_airlabs_get_flight_details_raises_on_error_payload():
+    client = StubAirlabsClient({"error": "some_error", "message": "Bad request"})
+    with pytest.raises(RuntimeError):
+        await client.async_get_flight_details(api_key="k", flight_iata="DY123")

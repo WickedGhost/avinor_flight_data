@@ -18,6 +18,7 @@ from .const import (
     CONF_TIME_FROM,
     CONF_TIME_TO,
     CONF_FLIGHT_TYPE,
+    CONF_AIRLABS_API_KEY,
     DEFAULT_TIME_FROM,
     DEFAULT_TIME_TO,
     DEFAULT_FLIGHT_TYPE,
@@ -94,6 +95,7 @@ class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "I": "International",
                     "S": "Schengen",
                 }),
+                vol.Optional(CONF_AIRLABS_API_KEY): vol.All(str, vol.Length(min=1)),
             }
         )
 
@@ -130,6 +132,7 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
         time_from_default = current.get(CONF_TIME_FROM)
         time_to_default = current.get(CONF_TIME_TO)
         flight_type_default = current.get(CONF_FLIGHT_TYPE, DEFAULT_FLIGHT_TYPE)
+        airlabs_key_default = current.get(CONF_AIRLABS_API_KEY)
 
         # Build airport field - use simple vol.In for reliability
         if airports:
@@ -157,6 +160,7 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
                     "I": "International",
                     "S": "Schengen",
                 }),
+                vol.Optional(CONF_AIRLABS_API_KEY, default=airlabs_key_default): vol.Any(None, vol.All(str, vol.Length(min=1))),
             }
         )
         return self.async_show_form(step_id="init", data_schema=data_schema)
