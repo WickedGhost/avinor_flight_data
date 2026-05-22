@@ -3,7 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-blue.svg)](https://hacs.xyz/)
 [![Hassfest](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml)
 [![HACS Validation](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml)
-[![Version 1.1.1](https://img.shields.io/badge/Version-1.1.1-orange.svg)](custom_components/avinor_flight_data/manifest.json)
+[![Version 1.1.2](https://img.shields.io/badge/Version-1.1.2-orange.svg)](custom_components/avinor_flight_data/manifest.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Custom Home Assistant integration that keeps your dashboards up to date with arrivals and departures from the official Avinor data feed.
@@ -159,6 +159,8 @@ title: Ankomster OSL
 
 ## Release Notes
 
+- **1.1.2**
+  - Airlabs schedule-backed entities now use airport names in the airport column instead of raw IATA codes.
 - **1.1.1**
   - Refreshed config wizard translations for the Airlabs API key field so the explanatory text is picked up correctly.
 - **1.1.0**

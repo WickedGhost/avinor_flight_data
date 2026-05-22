@@ -279,10 +279,10 @@ async def test_airlabs_get_schedules_dedupes_and_classifies_routes():
         ]
     }
     airport_payloads = {
-        "CPH": {"response": [{"iata_code": "CPH", "country_code": "DK"}]},
-        "TRD": {"response": [{"iata_code": "TRD", "country_code": "NO"}]},
-        "KRK": {"response": [{"iata_code": "KRK", "country_code": "PL"}]},
-        "LTN": {"response": [{"iata_code": "LTN", "country_code": "GB"}]},
+        "CPH": {"response": [{"iata_code": "CPH", "country_code": "DK", "name": "Copenhagen Airport"}]},
+        "TRD": {"response": [{"iata_code": "TRD", "country_code": "NO", "name": "Trondheim Airport"}]},
+        "KRK": {"response": [{"iata_code": "KRK", "country_code": "PL", "name": "Krakow Airport"}]},
+        "LTN": {"response": [{"iata_code": "LTN", "country_code": "GB", "name": "London Luton Airport"}]},
     }
 
     def payload(url, params):
@@ -305,7 +305,12 @@ async def test_airlabs_get_schedules_dedupes_and_classifies_routes():
     assert [flight["flightId"] for flight in result["flights"]] == ["SK1398", "WF481", "FR6216", "U28635"]
     assert [flight["dom_int"] for flight in result["flights"]] == ["S", "D", "S", "I"]
     assert [flight["status_code"] for flight in result["flights"]] == ["A", "E", "E", "EXP"]
-    assert result["flights"][0]["airport"] == "CPH"
+    assert [flight["airport"] for flight in result["flights"]] == [
+        "Copenhagen Airport",
+        "Trondheim Airport",
+        "Krakow Airport",
+        "London Luton Airport",
+    ]
 
 
 @pytest.mark.asyncio
@@ -328,7 +333,7 @@ async def test_airlabs_get_schedules_for_departures_uses_arrival_airport_for_typ
                 ]
             }
         if url.endswith("/airports"):
-            return {"response": [{"iata_code": "LGW", "country_code": "GB"}]}
+            return {"response": [{"iata_code": "LGW", "country_code": "GB", "name": "London Gatwick Airport"}]}
         raise AssertionError(f"Unexpected URL: {url}")
 
     client = StubAirlabsClient(payload)
@@ -341,6 +346,6 @@ async def test_airlabs_get_schedules_for_departures_uses_arrival_airport_for_typ
     )
 
     assert len(result["flights"]) == 1
-    assert result["flights"][0]["airport"] == "LGW"
+    assert result["flights"][0]["airport"] == "London Gatwick Airport"
     assert result["flights"][0]["dom_int"] == "I"
     assert result["flights"][0]["arr_dep"] == "D"
