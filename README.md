@@ -3,7 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-blue.svg)](https://hacs.xyz/)
 [![Hassfest](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml)
 [![HACS Validation](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml)
-[![Version 1.0.9](https://img.shields.io/badge/Version-1.0.9-orange.svg)](custom_components/avinor_flight_data/manifest.json)
+[![Version 1.1.1](https://img.shields.io/badge/Version-1.1.1-orange.svg)](custom_components/avinor_flight_data/manifest.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Custom Home Assistant integration that keeps your dashboards up to date with arrivals and departures from the official Avinor data feed.
@@ -65,9 +65,12 @@ Custom Home Assistant integration that keeps your dashboards up to date with arr
 | Direction         | `A` (arrivals) or `D` (departures).                   | `D`     |
 | Time from         | Hours back from now to include in results.            | `1`     |
 | Time to           | Hours forward from now to include in results.         | `7`     |
+| Schedule source   | `avinor` or `airlabs` schedules.                      | `avinor`|
 | Airlabs API key   | Optional API key used for flight details.             | none    |
 
 Each configured sensor reports the flight count as its state and exposes detailed flight data through the `flights` attribute.
+
+When `Schedule source` is set to `airlabs`, the integration uses Airlabs airport schedules for arrivals/departures, dedupes codeshares, and normalizes the result to the same sensor attributes. This is useful for airports that are missing or incomplete in Avinor's public feed.
 
 ## Known Limitations
 
@@ -82,6 +85,8 @@ https://airlabs.co/docs/flight
 
 ### Add your Airlabs API key
 
+You can obtain an API key by creating an account at https://airlabs.co/ (free for personal use).
+
 1. In Home Assistant, go to Settings → Devices & Services.
 2. Find **Avinor Flight Data**.
 3. Open **Configure** / **Options**.
@@ -89,6 +94,8 @@ https://airlabs.co/docs/flight
 5. Submit/save.
 
 The key is optional. If you don’t set it, you can still call the service by passing `api_key` in the service data.
+
+The same key can also be used for the optional `Schedule source = Airlabs schedules` mode.
 
 ### Service: `avinor_flight_data.get_flight_details`
 
@@ -152,6 +159,11 @@ title: Ankomster OSL
 
 ## Release Notes
 
+- **1.1.1**
+  - Refreshed config wizard translations for the Airlabs API key field so the explanatory text is picked up correctly.
+- **1.1.0**
+  - Added an opt-in Airlabs schedules source for airports that are incomplete in Avinor's public feed.
+  - Dedupes codeshare schedule rows and normalizes Airlabs data to the existing sensor format.
 - **1.0.9**
   - Documented the upstream Avinor limitation for private airports such as TRF/Torp.
 - **0.2.1**

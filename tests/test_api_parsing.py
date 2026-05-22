@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 import pytest
 
@@ -25,6 +26,7 @@ class StubClient(AvinorApiClient):
 
 class StubAirlabsClient(AirlabsApiClient):
     def __init__(self, payload):
+        super().__init__(session=None)
         self._payload = payload
         self.last_url = None
         self.last_params = None
@@ -32,6 +34,8 @@ class StubAirlabsClient(AirlabsApiClient):
     async def _get_json(self, url: str, params=None):
         self.last_url = url
         self.last_params = params
+        if callable(self._payload):
+            return self._payload(url, params)
         return self._payload
 
 
@@ -212,3 +216,131 @@ async def test_airlabs_get_flight_details_raises_on_error_payload():
     client = StubAirlabsClient({"error": "some_error", "message": "Bad request"})
     with pytest.raises(RuntimeError):
         await client.async_get_flight_details(api_key="k", flight_iata="DY123")
+
+
+@pytest.mark.asyncio
+async def test_airlabs_get_schedules_dedupes_and_classifies_routes():
+    now = datetime.now(timezone.utc)
+
+    def utc_in(hours: int) -> str:
+        return (now + timedelta(hours=hours)).strftime("%Y-%m-%d %H:%M")
+
+    schedules_payload = {
+        "response": [
+            {
+                "flight_iata": "KL8476",
+                "cs_flight_iata": "SK1398",
+                "airline_iata": "KL",
+                "dep_iata": "CPH",
+                "arr_iata": "TRF",
+                "arr_time_utc": utc_in(1),
+                "status": "landed",
+            },
+            {
+                "flight_iata": "SK1398",
+                "airline_iata": "SK",
+                "dep_iata": "CPH",
+                "arr_iata": "TRF",
+                "arr_time_utc": utc_in(1),
+                "status": "landed",
+            },
+            {
+                "flight_iata": "WF481",
+                "airline_iata": "WF",
+                "dep_iata": "TRD",
+                "arr_iata": "TRF",
+                "arr_time_utc": utc_in(2),
+                "status": "scheduled",
+            },
+            {
+                "flight_iata": "FR6216",
+                "airline_iata": "FR",
+                "dep_iata": "KRK",
+                "arr_iata": "TRF",
+                "arr_time_utc": utc_in(3),
+                "status": "scheduled",
+            },
+            {
+                "flight_iata": "U28635",
+                "airline_iata": "U2",
+                "dep_iata": "LTN",
+                "arr_iata": "TRF",
+                "arr_time_utc": utc_in(4),
+                "status": "active",
+            },
+            {
+                "flight_iata": "TOO_OLD",
+                "airline_iata": "XX",
+                "dep_iata": "BGO",
+                "arr_iata": "TRF",
+                "arr_time_utc": utc_in(-20),
+                "status": "landed",
+            },
+        ]
+    }
+    airport_payloads = {
+        "CPH": {"response": [{"iata_code": "CPH", "country_code": "DK"}]},
+        "TRD": {"response": [{"iata_code": "TRD", "country_code": "NO"}]},
+        "KRK": {"response": [{"iata_code": "KRK", "country_code": "PL"}]},
+        "LTN": {"response": [{"iata_code": "LTN", "country_code": "GB"}]},
+    }
+
+    def payload(url, params):
+        if url.endswith("/schedules"):
+            return schedules_payload
+        if url.endswith("/airports"):
+            return airport_payloads[params["iata_code"]]
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    client = StubAirlabsClient(payload)
+    result = await client.async_get_schedules(
+        api_key="k",
+        airport="TRF",
+        direction="A",
+        time_from=2,
+        time_to=6,
+    )
+
+    assert len(result["flights"]) == 4
+    assert [flight["flightId"] for flight in result["flights"]] == ["SK1398", "WF481", "FR6216", "U28635"]
+    assert [flight["dom_int"] for flight in result["flights"]] == ["S", "D", "S", "I"]
+    assert [flight["status_code"] for flight in result["flights"]] == ["A", "E", "E", "EXP"]
+    assert result["flights"][0]["airport"] == "CPH"
+
+
+@pytest.mark.asyncio
+async def test_airlabs_get_schedules_for_departures_uses_arrival_airport_for_type():
+    now = datetime.now(timezone.utc)
+    dep_time = (now + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")
+
+    def payload(url, params):
+        if url.endswith("/schedules"):
+            return {
+                "response": [
+                    {
+                        "flight_iata": "DY123",
+                        "airline_iata": "DY",
+                        "dep_iata": "TRF",
+                        "arr_iata": "LGW",
+                        "dep_time_utc": dep_time,
+                        "status": "scheduled",
+                    }
+                ]
+            }
+        if url.endswith("/airports"):
+            return {"response": [{"iata_code": "LGW", "country_code": "GB"}]}
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    client = StubAirlabsClient(payload)
+    result = await client.async_get_schedules(
+        api_key="k",
+        airport="TRF",
+        direction="D",
+        time_from=0,
+        time_to=2,
+    )
+
+    assert len(result["flights"]) == 1
+    assert result["flights"][0]["airport"] == "LGW"
+    assert result["flights"][0]["dom_int"] == "I"
+    assert result["flights"][0]["arr_dep"] == "D"

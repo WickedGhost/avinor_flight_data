@@ -2,15 +2,30 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import aiohttp
 import async_timeout
 import xmltodict
 
-from .const import API_BASE, API_FLIGHTS, API_AIRPORTS, AIRLABS_API_BASE, AIRLABS_API_FLIGHT_DETAILS
+from .const import (
+    API_BASE,
+    API_FLIGHTS,
+    API_AIRPORTS,
+    AIRLABS_API_BASE,
+    AIRLABS_API_AIRPORTS,
+    AIRLABS_API_FLIGHT_DETAILS,
+    AIRLABS_API_SCHEDULES,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+NORWAY_COUNTRY_CODE = "NO"
+SCHENGEN_COUNTRY_CODES = {
+    "AT", "BE", "CH", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR",
+    "HU", "IS", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "SE", "SI", "SK",
+}
 
 
 class AvinorApiClient:
@@ -173,6 +188,7 @@ class AirlabsApiClient:
 
     def __init__(self, session: aiohttp.ClientSession) -> None:
         self._session = session
+        self._airport_cache: dict[str, dict[str, Any]] = {}
 
     async def _get_json(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         try:
@@ -245,3 +261,203 @@ class AirlabsApiClient:
             return response if isinstance(response, dict) else {"response": response}
 
         return payload if isinstance(payload, dict) else {"response": payload}
+
+    async def async_get_airport(self, *, api_key: str, iata_code: str) -> Dict[str, Any]:
+        """Fetch airport metadata for one IATA code using Airlabs."""
+
+        code = (iata_code or "").strip().upper()
+        if not code:
+            return {}
+        if code in self._airport_cache:
+            return self._airport_cache[code]
+
+        payload = await self._get_json(
+            f"{AIRLABS_API_BASE}{AIRLABS_API_AIRPORTS}",
+            params={"api_key": api_key, "iata_code": code},
+        )
+        response = payload.get("response") if isinstance(payload, dict) else None
+        if isinstance(response, list):
+            airport = response[0] if response else {}
+        elif isinstance(response, dict):
+            airport = response
+        else:
+            airport = {}
+        self._airport_cache[code] = airport
+        return airport
+
+    async def async_get_schedules(
+        self,
+        *,
+        api_key: str,
+        airport: str,
+        direction: Optional[str] = None,
+        time_from: Optional[int] = None,
+        time_to: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Fetch airport schedules from Airlabs and normalize them to integration flight records."""
+
+        if not api_key or not str(api_key).strip():
+            raise ValueError("api_key is required")
+
+        airport = (airport or "").strip().upper()
+        direction = (direction or "A").strip().upper() or "A"
+
+        params: Dict[str, Any] = {
+            "api_key": api_key,
+            "limit": 50,
+        }
+        if direction == "D":
+            params["dep_iata"] = airport
+        else:
+            params["arr_iata"] = airport
+
+        payload = await self._get_json(f"{AIRLABS_API_BASE}{AIRLABS_API_SCHEDULES}", params=params)
+        if isinstance(payload, dict) and payload.get("error"):
+            message = payload.get("message") or payload.get("error")
+            raise RuntimeError(f"Airlabs API error: {message}")
+
+        response = payload.get("response") if isinstance(payload, dict) else None
+        rows = response if isinstance(response, list) else []
+        rows = self._filter_schedule_rows(rows, direction=direction, time_from=time_from, time_to=time_to)
+        flights = await self._normalize_schedule_rows(api_key=api_key, rows=rows, direction=direction, airport=airport)
+        return {
+            "lastUpdate": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "flights": flights,
+        }
+
+    def _filter_schedule_rows(
+        self,
+        rows: List[Dict[str, Any]],
+        *,
+        direction: str,
+        time_from: Optional[int],
+        time_to: Optional[int],
+    ) -> List[Dict[str, Any]]:
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(hours=max(int(time_from or 0), 0))
+        window_end = now + timedelta(hours=max(int(time_to or 0), 0))
+        filtered: List[Dict[str, Any]] = []
+        for row in rows:
+            schedule_time = self._parse_schedule_datetime(row, direction)
+            if schedule_time is None:
+                continue
+            if schedule_time < window_start or schedule_time > window_end:
+                continue
+            filtered.append(row)
+        return filtered
+
+    async def _normalize_schedule_rows(
+        self,
+        *,
+        api_key: str,
+        rows: List[Dict[str, Any]],
+        direction: str,
+        airport: str,
+    ) -> List[Dict[str, Any]]:
+        deduped = self._dedupe_schedule_rows(rows)
+        opposite_codes = {
+            self._get_counterparty_airport(row, direction)
+            for row in deduped
+            if self._get_counterparty_airport(row, direction)
+        }
+        airport_meta: dict[str, dict[str, Any]] = {}
+        for code in opposite_codes:
+            airport_meta[code] = await self.async_get_airport(api_key=api_key, iata_code=code)
+
+        flights: List[Dict[str, Any]] = []
+        for row in deduped:
+            other_airport = self._get_counterparty_airport(row, direction)
+            meta = airport_meta.get(other_airport or "", {})
+            flights.append(
+                {
+                    "uniqueId": self._schedule_identity(row),
+                    "airline": row.get("airline_iata") or row.get("airline_icao"),
+                    "flightId": row.get("flight_iata") or row.get("flight_icao") or row.get("flight_number") or "",
+                    "dom_int": self._classify_airlabs_flight(country_code=str(meta.get("country_code") or "").upper(), airport_code=other_airport),
+                    "schedule_time": self._schedule_time_utc(row, direction),
+                    "arr_dep": direction,
+                    "airport": other_airport,
+                    "check_in": row.get("dep_gate") if direction == "D" else None,
+                    "gate": row.get("arr_gate") if direction == "A" else row.get("dep_gate"),
+                    "status_code": self._map_airlabs_status(row.get("status")),
+                    "status_time": row.get("arr_actual_utc") if direction == "A" else row.get("dep_actual_utc"),
+                }
+            )
+        return flights
+
+    def _dedupe_schedule_rows(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        grouped: dict[str, Dict[str, Any]] = {}
+        for row in rows:
+            key = self._schedule_identity(row)
+            current = grouped.get(key)
+            if current is None or self._schedule_preference(row) > self._schedule_preference(current):
+                grouped[key] = row
+        return list(grouped.values())
+
+    def _schedule_identity(self, row: Dict[str, Any]) -> str:
+        return "|".join(
+            [
+                str(row.get("cs_flight_iata") or row.get("cs_flight_icao") or row.get("flight_iata") or row.get("flight_icao") or row.get("flight_number") or ""),
+                str(row.get("dep_iata") or row.get("dep_icao") or ""),
+                str(row.get("arr_iata") or row.get("arr_icao") or ""),
+                str(row.get("dep_time_utc") or ""),
+                str(row.get("arr_time_utc") or ""),
+            ]
+        )
+
+    def _schedule_preference(self, row: Dict[str, Any]) -> int:
+        score = 0
+        if not row.get("cs_flight_iata") and not row.get("cs_flight_icao"):
+            score += 10
+        if row.get("flight_iata"):
+            score += 2
+        if row.get("arr_estimated_utc") or row.get("dep_estimated_utc"):
+            score += 1
+        return score
+
+    def _get_counterparty_airport(self, row: Dict[str, Any], direction: str) -> str:
+        if direction == "D":
+            return str(row.get("arr_iata") or row.get("arr_icao") or "").strip().upper()
+        return str(row.get("dep_iata") or row.get("dep_icao") or "").strip().upper()
+
+    def _schedule_time_utc(self, row: Dict[str, Any], direction: str) -> str:
+        if direction == "D":
+            return str(row.get("dep_time_utc") or row.get("dep_estimated_utc") or row.get("dep_time") or "")
+        return str(row.get("arr_time_utc") or row.get("arr_estimated_utc") or row.get("arr_time") or "")
+
+    def _parse_schedule_datetime(self, row: Dict[str, Any], direction: str) -> datetime | None:
+        raw = self._schedule_time_utc(row, direction)
+        if not raw:
+            return None
+        text = raw.strip().replace(" ", "T")
+        if text.endswith("Z"):
+            parsed = text
+        elif "T" in text:
+            parsed = f"{text}Z"
+        else:
+            parsed = text
+        try:
+            return datetime.fromisoformat(parsed.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+    def _classify_airlabs_flight(self, *, country_code: str, airport_code: str | None) -> str:
+        if not airport_code:
+            return ""
+        if country_code == NORWAY_COUNTRY_CODE:
+            return "D"
+        if country_code in SCHENGEN_COUNTRY_CODES:
+            return "S"
+        if country_code:
+            return "I"
+        return ""
+
+    def _map_airlabs_status(self, status: Any) -> str:
+        normalized = str(status or "").strip().lower()
+        return {
+            "scheduled": "E",
+            "active": "EXP",
+            "en-route": "EXP",
+            "landed": "A",
+            "cancelled": "C",
+        }.get(normalized, str(status or "").strip().upper())
