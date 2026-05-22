@@ -126,6 +126,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AvinorConfigEntry) -> bo
     """Set up Avinor Flight Data from a config entry."""
     session = async_get_clientsession(hass)
     api = AvinorApiClient(session)
+    airlabs_api = AirlabsApiClient(session)
 
     # Merge options over data so updated options take effect on reloads
     conf = {**entry.data, **entry.options}
@@ -133,6 +134,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AvinorConfigEntry) -> bo
     coordinator = AvinorCoordinator(
         hass,
         api,
+        airlabs_api,
         conf,
         update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
     )

@@ -7,6 +7,7 @@ CONF_TIME_TO = "time_to"
 
 # Optional Airlabs integration (flight details)
 CONF_AIRLABS_API_KEY = "airlabs_api_key"
+CONF_SCHEDULE_SOURCE = "schedule_source"
 
 # Client-side filtering options
 CONF_FLIGHT_TYPE = "flight_type"  # Avinor dom_int field
@@ -15,6 +16,7 @@ DEFAULT_TIME_FROM = 1
 DEFAULT_TIME_TO = 7
 
 DEFAULT_FLIGHT_TYPE = ""  # empty = all
+DEFAULT_SCHEDULE_SOURCE = "avinor"
 
 PLATFORMS = ["sensor"]
 
@@ -27,6 +29,8 @@ API_AIRPORTS = "/airportNames/v1.0"
 
 AIRLABS_API_BASE = "https://airlabs.co/api/v9"
 AIRLABS_API_FLIGHT_DETAILS = "/flight"
+AIRLABS_API_SCHEDULES = "/schedules"
+AIRLABS_API_AIRPORTS = "/airports"
 
 # Update every 3 minutes as suggested by Avinor docs
 UPDATE_INTERVAL_SECONDS = 180

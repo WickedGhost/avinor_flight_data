@@ -19,9 +19,11 @@ from .const import (
     CONF_TIME_TO,
     CONF_FLIGHT_TYPE,
     CONF_AIRLABS_API_KEY,
+    CONF_SCHEDULE_SOURCE,
     DEFAULT_TIME_FROM,
     DEFAULT_TIME_TO,
     DEFAULT_FLIGHT_TYPE,
+    DEFAULT_SCHEDULE_SOURCE,
 )
 from .api import AvinorApiClient
 
@@ -55,11 +57,14 @@ class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Unique key: airport + direction + flight type (allows multiple entries per airport/direction)
             flight_type = (user_input.get(CONF_FLIGHT_TYPE) or "").strip().upper() or "ALL"
+            schedule_source = (user_input.get(CONF_SCHEDULE_SOURCE) or DEFAULT_SCHEDULE_SOURCE).strip().lower()
             await self.async_set_unique_id(
-                f"{user_input[CONF_AIRPORT]}_{user_input[CONF_DIRECTION]}_{flight_type}"
+                f"{user_input[CONF_AIRPORT]}_{user_input[CONF_DIRECTION]}_{flight_type}_{schedule_source}"
             )
             self._abort_if_unique_id_configured()
             title_suffix = "All" if flight_type == "ALL" else flight_type
+            if schedule_source == "airlabs":
+                title_suffix = f"{title_suffix} Airlabs"
             return self.async_create_entry(
                 title=f"{user_input[CONF_AIRPORT]} {user_input[CONF_DIRECTION]} {title_suffix}",
                 data=user_input,
@@ -94,6 +99,10 @@ class AvinorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "D": "Domestic",
                     "I": "International",
                     "S": "Schengen",
+                }),
+                vol.Optional(CONF_SCHEDULE_SOURCE, default=DEFAULT_SCHEDULE_SOURCE): vol.In({
+                    "avinor": "Avinor",
+                    "airlabs": "Airlabs schedules",
                 }),
                 vol.Optional(CONF_AIRLABS_API_KEY): vol.All(str, vol.Length(min=1)),
             }
@@ -132,6 +141,7 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
         time_from_default = current.get(CONF_TIME_FROM)
         time_to_default = current.get(CONF_TIME_TO)
         flight_type_default = current.get(CONF_FLIGHT_TYPE, DEFAULT_FLIGHT_TYPE)
+        schedule_source_default = current.get(CONF_SCHEDULE_SOURCE, DEFAULT_SCHEDULE_SOURCE)
         airlabs_key_default = current.get(CONF_AIRLABS_API_KEY)
 
         # Build airport field - use simple vol.In for reliability
@@ -159,6 +169,10 @@ class AvinorOptionsFlow(config_entries.OptionsFlow):
                     "D": "Domestic",
                     "I": "International",
                     "S": "Schengen",
+                }),
+                vol.Optional(CONF_SCHEDULE_SOURCE, default=schedule_source_default): vol.In({
+                    "avinor": "Avinor",
+                    "airlabs": "Airlabs schedules",
                 }),
                 vol.Optional(CONF_AIRLABS_API_KEY, default=airlabs_key_default): vol.Any(None, vol.All(str, vol.Length(min=1))),
             }

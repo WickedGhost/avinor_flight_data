@@ -7,10 +7,12 @@ from typing import Any, Dict, Optional
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import AvinorApiClient
+from .api import AirlabsApiClient, AvinorApiClient
 from .const import (
     CONF_AIRPORT,
+    CONF_AIRLABS_API_KEY,
     CONF_DIRECTION,
+    CONF_SCHEDULE_SOURCE,
     CONF_TIME_FROM,
     CONF_TIME_TO,
 )
@@ -25,6 +27,7 @@ class AvinorCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
         self,
         hass: HomeAssistant,
         api: AvinorApiClient,
+        airlabs_api: AirlabsApiClient,
         conf: Dict[str, Any],
         *,
         update_interval: timedelta,
@@ -36,17 +39,27 @@ class AvinorCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
             update_interval=update_interval,
         )
         self._api = api
+        self._airlabs_api = airlabs_api
         self._conf = conf
         self._last_data: Optional[Dict[str, Any]] = None
 
     async def _async_update_data(self) -> Dict[str, Any]:
         try:
-            flights = await self._api.async_get_flights(
-                airport=self._conf[CONF_AIRPORT],
-                direction=self._conf.get(CONF_DIRECTION),
-                time_from=self._conf.get(CONF_TIME_FROM),
-                time_to=self._conf.get(CONF_TIME_TO),
-            )
+            if self._conf.get(CONF_SCHEDULE_SOURCE) == "airlabs":
+                flights = await self._airlabs_api.async_get_schedules(
+                    api_key=self._conf.get(CONF_AIRLABS_API_KEY, ""),
+                    airport=self._conf[CONF_AIRPORT],
+                    direction=self._conf.get(CONF_DIRECTION),
+                    time_from=self._conf.get(CONF_TIME_FROM),
+                    time_to=self._conf.get(CONF_TIME_TO),
+                )
+            else:
+                flights = await self._api.async_get_flights(
+                    airport=self._conf[CONF_AIRPORT],
+                    direction=self._conf.get(CONF_DIRECTION),
+                    time_from=self._conf.get(CONF_TIME_FROM),
+                    time_to=self._conf.get(CONF_TIME_TO),
+                )
 
             # Keep a copy as last known good data
             self._last_data = flights

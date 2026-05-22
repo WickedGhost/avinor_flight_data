@@ -9,14 +9,18 @@
           "direction": "Flight Direction",
           "time_from": "Hours Back",
           "time_to": "Hours Forward",
-          "flight_type": "Flight type"
+          "flight_type": "Flight type",
+          "schedule_source": "Schedule source",
+          "airlabs_api_key": "Airlabs API key"
         },
         "data_description": {
           "airport": "Select the airport to monitor (IATA code). Search by typing the airport name or code.",
           "direction": "Choose whether to show arriving or departing flights.",
           "time_from": "Include flights from this many hours ago (0-72 hours).",
           "time_to": "Include flights up to this many hours ahead (0-72 hours).",
-          "flight_type": "Filter by flight type. All = no filtering."
+          "flight_type": "Filter by flight type. All = no filtering.",
+          "schedule_source": "Choose Avinor for the default feed, or Airlabs schedules when you need broader airport coverage. Airlabs requires an API key. The same key is also used when you want to click a flight for details.",
+          "airlabs_api_key": "Required for Airlabs schedules and for opening flight details when clicking a flight in supported cards."
         }
       }
     }
@@ -30,14 +34,18 @@
           "direction": "Flight Direction",
           "time_from": "Hours Back",
           "time_to": "Hours Forward",
-          "flight_type": "Flight type"
+          "flight_type": "Flight type",
+          "schedule_source": "Schedule source",
+          "airlabs_api_key": "Airlabs API key"
         },
         "data_description": {
           "airport": "Change the airport to monitor a different location.",
           "direction": "Switch between arrivals and departures.",
           "time_from": "Adjust the time window for past flights (0-72 hours).",
           "time_to": "Adjust the time window for future flights (0-72 hours).",
-          "flight_type": "Filter by flight type. All = no filtering."
+          "flight_type": "Filter by flight type. All = no filtering.",
+          "schedule_source": "Choose Avinor for the default feed, or Airlabs schedules when you need broader airport coverage. Airlabs requires an API key. The same key is also used when you want to click a flight for details.",
+          "airlabs_api_key": "Required for Airlabs schedules and for opening flight details when clicking a flight in supported cards."
         }
       }
     }

@@ -17,6 +17,8 @@ from .const import (
     CONF_TIME_FROM,
     CONF_TIME_TO,
     CONF_FLIGHT_TYPE,
+    CONF_SCHEDULE_SOURCE,
+    DEFAULT_SCHEDULE_SOURCE,
 )
 
 
@@ -74,10 +76,13 @@ class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
         airport = conf[CONF_AIRPORT]
         direction = conf[CONF_DIRECTION]
         flight_type = (conf.get(CONF_FLIGHT_TYPE) or "").strip().upper() or "ALL"
+        schedule_source = (conf.get(CONF_SCHEDULE_SOURCE) or DEFAULT_SCHEDULE_SOURCE).strip().lower()
 
         # Include flight_type so multiple entities can exist for same airport/direction.
-        self._attr_unique_id = f"avinor_{airport}_{direction}_{flight_type}"
+        self._attr_unique_id = f"avinor_{airport}_{direction}_{flight_type}_{schedule_source}"
         name_suffix = "All" if flight_type == "ALL" else flight_type
+        if schedule_source == "airlabs":
+            name_suffix = f"{name_suffix} Airlabs"
         self._attr_name = f"Avinor {airport} {direction} {name_suffix}"
 
     @property
@@ -109,6 +114,7 @@ class AvinorFlightsSensor(CoordinatorEntity, SensorEntity):
             "airport": conf.get(CONF_AIRPORT),
             "direction": conf.get(CONF_DIRECTION),
             "flight_type": conf.get(CONF_FLIGHT_TYPE),
+            "schedule_source": conf.get(CONF_SCHEDULE_SOURCE, DEFAULT_SCHEDULE_SOURCE),
             "time_from": conf.get(CONF_TIME_FROM),
             "time_to": conf.get(CONF_TIME_TO),
             "last_update": data.get("lastUpdate"),
