@@ -3,7 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-blue.svg)](https://hacs.xyz/)
 [![Hassfest](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hassfest.yml)
 [![HACS Validation](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml/badge.svg)](https://github.com/WickedGhost/avinor_flight_data/actions/workflows/hacs.yml)
-[![Version 1.0.8](https://img.shields.io/badge/Version-1.0.8-orange.svg)](custom_components/avinor_flight_data/manifest.json)
+[![Version 1.0.9](https://img.shields.io/badge/Version-1.0.9-orange.svg)](custom_components/avinor_flight_data/manifest.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Custom Home Assistant integration that keeps your dashboards up to date with arrivals and departures from the official Avinor data feed.
@@ -16,6 +16,7 @@ Custom Home Assistant integration that keeps your dashboards up to date with arr
 - [Features](#features)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Known Limitations](#known-limitations)
 - [Flight Details (Airlabs)](#flight-details-airlabs)
 - [Companion Lovelace Card](#companion-lovelace-card)
 - [Example Dashboard Card](#example-dashboard-card)
@@ -67,6 +68,12 @@ Custom Home Assistant integration that keeps your dashboards up to date with arr
 | Airlabs API key   | Optional API key used for flight details.             | none    |
 
 Each configured sensor reports the flight count as its state and exposes detailed flight data through the `flights` attribute.
+
+## Known Limitations
+
+- This integration mirrors the public Avinor flight feed and does not supplement missing airport data from other sources.
+- Avinor documents that the service does not include data from private airports such as Sandefjord Airport, Torp (TRF).
+- Private airports may therefore show incomplete, delayed, or missing arrivals and departures even when the integration is working correctly.
 
 ## Flight Details (Airlabs)
 
@@ -145,6 +152,8 @@ title: Ankomster OSL
 
 ## Release Notes
 
+- **1.0.9**
+  - Documented the upstream Avinor limitation for private airports such as TRF/Torp.
 - **0.2.1**
   - Split the Lovelace card into its own repository.
   - Updated HACS/Hassfest workflows to meet current validation requirements.

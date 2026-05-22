@@ -1,9 +1,14 @@
 import asyncio
+from types import SimpleNamespace
 import pytest
 
 from custom_components.avinor_flight_data.api import AvinorApiClient
 from custom_components.avinor_flight_data.api import AirlabsApiClient
-from custom_components.avinor_flight_data.sensor import _apply_flight_type_filter, _compact_flight
+from custom_components.avinor_flight_data.sensor import (
+    AvinorFlightsSensor,
+    _apply_flight_type_filter,
+    _compact_flight,
+)
 
 
 class StubClient(AvinorApiClient):
@@ -106,6 +111,47 @@ def test_apply_flight_type_filter():
     assert [f["flightId"] for f in _apply_flight_type_filter(flights, "")] == ["SK1", "SK2", "SK3", "SK4"]
     assert [f["flightId"] for f in _apply_flight_type_filter(flights, "D")] == ["SK1"]
     assert [f["flightId"] for f in _apply_flight_type_filter(flights, "s")] == ["SK3"]
+
+
+def test_sensor_entity_applies_flight_type_per_entry():
+    flights = [
+        {"flightId": "SK1", "dom_int": "D"},
+        {"flightId": "SK2", "dom_int": "I"},
+        {"flightId": "SK3", "dom_int": "S"},
+    ]
+    coordinator = SimpleNamespace(data={"lastUpdate": "2025-01-01T12:00:00Z", "flights": flights})
+
+    domestic_sensor = object.__new__(AvinorFlightsSensor)
+    domestic_sensor.coordinator = coordinator
+    domestic_sensor._entry = SimpleNamespace(
+        data={
+            "airport": "OSL",
+            "direction": "A",
+            "flight_type": "D",
+            "time_from": 1,
+            "time_to": 7,
+        },
+        options={},
+    )
+
+    all_types_sensor = object.__new__(AvinorFlightsSensor)
+    all_types_sensor.coordinator = coordinator
+    all_types_sensor._entry = SimpleNamespace(
+        data={
+            "airport": "TRF",
+            "direction": "A",
+            "flight_type": "",
+            "time_from": 1,
+            "time_to": 7,
+        },
+        options={},
+    )
+
+    assert domestic_sensor.native_value == 1
+    assert [f["flightId"] for f in domestic_sensor.extra_state_attributes["flights"]] == ["SK1"]
+
+    assert all_types_sensor.native_value == 3
+    assert [f["flightId"] for f in all_types_sensor.extra_state_attributes["flights"]] == ["SK1", "SK2", "SK3"]
 
 
 def test_compact_flight_contains_expected_keys():
