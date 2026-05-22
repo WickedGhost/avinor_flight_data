@@ -368,6 +368,7 @@ class AirlabsApiClient:
         for row in deduped:
             other_airport = self._get_counterparty_airport(row, direction)
             meta = airport_meta.get(other_airport or "", {})
+            airport_display = str(meta.get("name") or other_airport or "")
             flights.append(
                 {
                     "uniqueId": self._schedule_identity(row),
@@ -376,7 +377,7 @@ class AirlabsApiClient:
                     "dom_int": self._classify_airlabs_flight(country_code=str(meta.get("country_code") or "").upper(), airport_code=other_airport),
                     "schedule_time": self._schedule_time_utc(row, direction),
                     "arr_dep": direction,
-                    "airport": other_airport,
+                    "airport": airport_display,
                     "check_in": row.get("dep_gate") if direction == "D" else None,
                     "gate": row.get("arr_gate") if direction == "A" else row.get("dep_gate"),
                     "status_code": self._map_airlabs_status(row.get("status")),
